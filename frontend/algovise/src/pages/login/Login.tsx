@@ -29,6 +29,7 @@ const Login = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.token);
+      localStorage.setItem("id", data.id);
       navigate("/");
     } catch (error: any) {
       setError(error.message);

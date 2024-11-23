@@ -1,0 +1,105 @@
+{
+  "quizTitle": "Classic Problems in Graph Theory",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Which of the following is the classic algorithm for finding the shortest path in an unweighted graph?",
+      "answers": [
+        { "text": "Breadth-First Search (BFS)", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "Which algorithm is used to find the minimum spanning tree in a graph?",
+      "answers": [
+        { "text": "Prim's Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 3,
+      "question": "What is the time complexity of Kruskal's algorithm for finding the minimum spanning tree?",
+      "answers": [
+        { "text": "O(E * log(E))", "isCorrect": true },
+        { "text": "O(V * log(V))", "isCorrect": false },
+        { "text": "O(V^2)", "isCorrect": false },
+        { "text": "O(E^2)", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Which of the following is a classic problem that uses the maximum flow algorithm?",
+      "answers": [
+        { "text": "The Ford-Fulkerson Problem", "isCorrect": true },
+        { "text": "The Traveling Salesman Problem", "isCorrect": false },
+        { "text": "The Knapsack Problem", "isCorrect": false },
+        { "text": "The Graph Coloring Problem", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 5,
+      "question": "Which of the following problems can be solved using the Bellman-Ford algorithm?",
+      "answers": [
+        { "text": "Finding the shortest path in graphs with negative weights", "isCorrect": true },
+        { "text": "Finding the minimum spanning tree", "isCorrect": false },
+        { "text": "Finding the longest path in a graph", "isCorrect": false },
+        { "text": "Finding a cycle in an undirected graph", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 6,
+      "question": "Which of the following problems is solved using the Depth-First Search (DFS) algorithm?",
+      "answers": [
+        { "text": "Finding strongly connected components", "isCorrect": true },
+        { "text": "Finding the shortest path", "isCorrect": false },
+        { "text": "Finding the minimum spanning tree", "isCorrect": false },
+        { "text": "Finding the maximum flow", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "Which of the following problems is the basis of the traveling salesman problem (TSP)?",
+      "answers": [
+        { "text": "Finding the shortest Hamiltonian path", "isCorrect": true },
+        { "text": "Finding the minimum spanning tree", "isCorrect": false },
+        { "text": "Finding the longest path in a graph", "isCorrect": false },
+        { "text": "Finding the maximum matching in a bipartite graph", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 8,
+      "question": "Which of the following is true about the graph coloring problem?",
+      "answers": [
+        { "text": "It asks for the minimum number of colors needed to color a graph so no two adjacent vertices have the same color", "isCorrect": true },
+        { "text": "It asks for the maximum number of edges in a graph", "isCorrect": false },
+        { "text": "It is solved using Dijkstra's algorithm", "isCorrect": false },
+        { "text": "It is a dynamic programming problem", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 9,
+      "question": "Which of the following problems is NP-complete?",
+      "answers": [
+        { "text": "The Traveling Salesman Problem (TSP)", "isCorrect": true },
+        { "text": "The Shortest Path Problem", "isCorrect": false },
+        { "text": "The Maximum Flow Problem", "isCorrect": false },
+        { "text": "The Minimum Spanning Tree Problem", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Which of the following algorithms can be used to solve the minimum cut problem in a graph?",
+      "answers": [
+        { "text": "Max-Flow Min-Cut Theorem", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false }
+      ]
+    }
+  ]
+}

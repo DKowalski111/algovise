@@ -1,0 +1,105 @@
+{
+  "quizTitle": "Algorithms for Directed Graphs",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Which algorithm is used to find the strongly connected components of a directed graph?",
+      "answers": [
+        { "text": "Kosaraju's Algorithm", "isCorrect": true },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Prim's Algorithm", "isCorrect": false },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "Which of the following algorithms can be used to detect cycles in a directed graph?",
+      "answers": [
+        { "text": "Depth-First Search (DFS)", "isCorrect": true },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false },
+        { "text": "A* Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 3,
+      "question": "What is the time complexity of the Bellman-Ford algorithm for a directed graph with V vertices and E edges?",
+      "answers": [
+        { "text": "O(V * E)", "isCorrect": true },
+        { "text": "O(V^2)", "isCorrect": false },
+        { "text": "O(E * log(V))", "isCorrect": false },
+        { "text": "O(E^2)", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Which algorithm is used to find the shortest path in a directed graph with negative edge weights?",
+      "answers": [
+        { "text": "Bellman-Ford Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "A* Algorithm", "isCorrect": false },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 5,
+      "question": "Which algorithm is used to compute the transitive closure of a directed graph?",
+      "answers": [
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Prim's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 6,
+      "question": "Which algorithm is used for finding the topological order of a directed acyclic graph (DAG)?",
+      "answers": [
+        { "text": "Kahn's Algorithm", "isCorrect": true },
+        { "text": "Depth-First Search (DFS)", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "Which of the following algorithms is used to compute the maximum flow in a directed graph?",
+      "answers": [
+        { "text": "Ford-Fulkerson Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "A* Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 8,
+      "question": "Which of the following can be used to check if a directed graph is strongly connected?",
+      "answers": [
+        { "text": "Kosaraju's Algorithm", "isCorrect": true },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 9,
+      "question": "Which of the following problems can be solved by using the shortest path algorithms in a directed graph?",
+      "answers": [
+        { "text": "Finding the minimum distance between two vertices", "isCorrect": true },
+        { "text": "Finding the maximum flow in the graph", "isCorrect": false },
+        { "text": "Finding the minimum spanning tree", "isCorrect": false },
+        { "text": "Checking if the graph is bipartite", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Which of the following is a limitation of the Bellman-Ford algorithm in directed graphs?",
+      "answers": [
+        { "text": "It cannot handle negative weight cycles", "isCorrect": true },
+        { "text": "It only works with undirected graphs", "isCorrect": false },
+        { "text": "It is slower than Dijkstra's in all cases", "isCorrect": false },
+        { "text": "It cannot handle positive weights", "isCorrect": false }
+      ]
+    }
+  ]
+}

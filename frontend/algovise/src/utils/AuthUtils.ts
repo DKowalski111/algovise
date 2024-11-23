@@ -2,6 +2,10 @@ export const getToken = () => {
   return localStorage.getItem('token'); // Retrieve the token from localStorage
 };
 
+export const getUserId = () => {
+  return localStorage.getItem('id'); // Retrieve the token from localStorage
+};
+
 export const setToken = (token: string) => {
   localStorage.setItem('token', token); // Store the token in localStorage
 };

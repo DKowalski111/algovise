@@ -1,0 +1,105 @@
+{
+  "quizTitle": "Real World Graph Algorithms",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Which of the following is a real-world application of graph algorithms?",
+      "answers": [
+        { "text": "Social network analysis", "isCorrect": true },
+        { "text": "Sorting algorithms", "isCorrect": false },
+        { "text": "Binary search", "isCorrect": false },
+        { "text": "Database indexing", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "Which graph algorithm is commonly used for finding the shortest path in a map?",
+      "answers": [
+        { "text": "Dijkstra's algorithm", "isCorrect": true },
+        { "text": "Prim's algorithm", "isCorrect": false },
+        { "text": "Kruskal's algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 3,
+      "question": "Which algorithm is used to find the minimum spanning tree in a connected, weighted graph?",
+      "answers": [
+        { "text": "Kruskal's algorithm", "isCorrect": true },
+        { "text": "Dijkstra's algorithm", "isCorrect": false },
+        { "text": "Depth-First Search", "isCorrect": false },
+        { "text": "Floyd-Warshall algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Which algorithm is commonly used to detect cycles in a directed graph?",
+      "answers": [
+        { "text": "Depth-First Search", "isCorrect": true },
+        { "text": "Breadth-First Search", "isCorrect": false },
+        { "text": "Kruskal's algorithm", "isCorrect": false },
+        { "text": "Dijkstra's algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 5,
+      "question": "Which graph algorithm is most useful for finding strongly connected components?",
+      "answers": [
+        { "text": "Kosaraju's algorithm", "isCorrect": true },
+        { "text": "Floyd-Warshall algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford algorithm", "isCorrect": false },
+        { "text": "Kruskal's algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 6,
+      "question": "In the context of social networks, what is the primary use of graph algorithms?",
+      "answers": [
+        { "text": "To analyze relationships and interactions between users", "isCorrect": true },
+        { "text": "To sort user posts by relevance", "isCorrect": false },
+        { "text": "To recommend new friends based on mutual connections", "isCorrect": false },
+        { "text": "To store data efficiently", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "Which algorithm is frequently used for recommending products based on user preferences and behaviors?",
+      "answers": [
+        { "text": "Collaborative filtering algorithm", "isCorrect": true },
+        { "text": "Dijkstra's algorithm", "isCorrect": false },
+        { "text": "Kruskal's algorithm", "isCorrect": false },
+        { "text": "A* search algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 8,
+      "question": "In a graph representing a transportation system, which graph algorithm would help to find the most efficient route?",
+      "answers": [
+        { "text": "Dijkstra's algorithm", "isCorrect": true },
+        { "text": "Depth-First Search", "isCorrect": false },
+        { "text": "Breadth-First Search", "isCorrect": false },
+        { "text": "Bellman-Ford algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 9,
+      "question": "What is the primary use of the A* search algorithm in graph theory?",
+      "answers": [
+        { "text": "To find the shortest path with an optimal cost", "isCorrect": true },
+        { "text": "To detect cycles in a graph", "isCorrect": false },
+        { "text": "To find connected components", "isCorrect": false },
+        { "text": "To generate minimum spanning trees", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Which of the following problems can be solved using graph traversal algorithms?",
+      "answers": [
+        { "text": "Finding the shortest path between two nodes", "isCorrect": true },
+        { "text": "Calculating the average degree of vertices", "isCorrect": false },
+        { "text": "Identifying the central node in a graph", "isCorrect": false },
+        { "text": "Detecting edges with the highest weight", "isCorrect": false }
+      ]
+    }
+  ]
+}

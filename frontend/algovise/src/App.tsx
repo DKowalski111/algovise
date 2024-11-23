@@ -13,10 +13,18 @@ import AlgorithmsForDirectedGraphs from './pages/tutorials/algorithms-for-direct
 import BasicGraphAlgorithms from './pages/tutorials/basic-graph-algorithms/BasicGraphAlgorithms';
 import ClassicProblems from './pages/tutorials/classic-problems/ClassicProblems';
 import RealWorldGraphAlgorithms from './pages/tutorials/real-world-graph-algorithms/RealWorldGraphAlgorithms';
+import Quizzes from './pages/quizzes/Quizzes';
+import QuizAdvancedGraphAlgorithms from './pages/quizzes/advanced-graph-algorithms/QuizAdvancedGraphAlgorithms';
+import QuizAlgorithmsForDirectedGraphs from './pages/quizzes/algorithms-for-directed-graphs/QuizAlgorithmsForDirectedGraphs';
+import QuizBasicGraphAlgorithms from './pages/quizzes/basic-graph-algorithms/QuizBasicGraphAlgorithms';
+import QuizClassicProblems from './pages/quizzes/classic-problems/QuizClassicProblems';
+import QuizFundamentalsOfGraphTheory from './pages/quizzes/fundamentals-of-graph-theory/QuizFundamentalsOfGraphTheory';
+import QuizRealWorldGraphAlgorithms from './pages/quizzes/real-world-graph-algorithms/QuizRealWorldGraphAlgorithms';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
     console.log(localStorage.getItem("token"));
+    console.log(localStorage.getItem("id"));
   }, [])
 
   return element;
@@ -38,6 +46,14 @@ function App() {
           <Route path="/tutorials/basic-graph-algorithms" element={<BasicGraphAlgorithms />} />
           <Route path="/tutorials/classic-problems" element={<ClassicProblems />} />
           <Route path="/tutorials/real-world-graph-algorithms" element={<RealWorldGraphAlgorithms />} />
+          <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/quizzes/advanced-graph-algorithms" element={<QuizAdvancedGraphAlgorithms />} />
+          <Route path="/quizzes/algorithms-for-directed-graphs" element={<QuizAlgorithmsForDirectedGraphs />} />
+          <Route path="/quizzes/basic-graph-algorithms" element={<QuizBasicGraphAlgorithms />} />
+          <Route path="/quizzes/classic-problems" element={<QuizClassicProblems />} />
+          <Route path="/quizzes/fundamentals-of-graph-theory" element={<QuizFundamentalsOfGraphTheory />} />
+          <Route path="/quizzes/real-world-graph-algorithms" element={<QuizRealWorldGraphAlgorithms />} />
+
         </Route>
       </Routes>
     </div>

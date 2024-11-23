@@ -23,6 +23,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token'); // Remove token from storage
+    localStorage.removeItem('id');
     setIsTokenValid(false); // Immediately update the UI
     navigate('/login'); // Redirect to login page
   };

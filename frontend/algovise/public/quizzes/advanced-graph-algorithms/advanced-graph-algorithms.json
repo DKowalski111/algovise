@@ -1,0 +1,105 @@
+{
+  "quizTitle": "Advanced Graph Algorithms",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Which algorithm is used to find the maximum flow in a flow network?",
+      "answers": [
+        { "text": "Ford-Fulkerson Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Prim's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "What is the time complexity of the Ford-Fulkerson algorithm?",
+      "answers": [
+        { "text": "O(E * max_flow)", "isCorrect": true },
+        { "text": "O(V^2)", "isCorrect": false },
+        { "text": "O(E * log(V))", "isCorrect": false },
+        { "text": "O(E^2)", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 3,
+      "question": "Which algorithm is used to solve the traveling salesman problem (TSP) for a weighted graph?",
+      "answers": [
+        { "text": "Held-Karp Algorithm", "isCorrect": true },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Which algorithm is used for topological sorting in a Directed Acyclic Graph (DAG)?",
+      "answers": [
+        { "text": "Kahn's Algorithm", "isCorrect": true },
+        { "text": "QuickSort Algorithm", "isCorrect": false },
+        { "text": "MergeSort Algorithm", "isCorrect": false },
+        { "text": "Depth-First Search (DFS)", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 5,
+      "question": "Which of the following algorithms can be used to detect negative weight cycles in a graph?",
+      "answers": [
+        { "text": "Bellman-Ford Algorithm", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Floyd-Warshall Algorithm", "isCorrect": false },
+        { "text": "Prim's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 6,
+      "question": "Which algorithm is used to find the longest path in a Directed Acyclic Graph (DAG)?",
+      "answers": [
+        { "text": "Topological Sort followed by Dynamic Programming", "isCorrect": true },
+        { "text": "Dijkstra's Algorithm", "isCorrect": false },
+        { "text": "Bellman-Ford Algorithm", "isCorrect": false },
+        { "text": "Depth-First Search (DFS)", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "Which of the following is the primary use of the A* (A-star) algorithm?",
+      "answers": [
+        { "text": "Finding the shortest path in a weighted graph", "isCorrect": true },
+        { "text": "Finding the minimum spanning tree", "isCorrect": false },
+        { "text": "Detecting cycles in a graph", "isCorrect": false },
+        { "text": "Finding strongly connected components", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 8,
+      "question": "What is the main advantage of the A* (A-star) algorithm over Dijkstra's algorithm?",
+      "answers": [
+        { "text": "It uses a heuristic to guide the search", "isCorrect": true },
+        { "text": "It only works with undirected graphs", "isCorrect": false },
+        { "text": "It finds the minimum spanning tree", "isCorrect": false },
+        { "text": "It is faster than Dijkstra's in all cases", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 9,
+      "question": "Which algorithm is used to find the minimum cost flow in a network flow problem?",
+      "answers": [
+        { "text": "Min-Cost Max-Flow Algorithm", "isCorrect": true },
+        { "text": "Ford-Fulkerson Algorithm", "isCorrect": false },
+        { "text": "Kruskal's Algorithm", "isCorrect": false },
+        { "text": "Prim's Algorithm", "isCorrect": false }
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Which of the following is a limitation of the Bellman-Ford algorithm?",
+      "answers": [
+        { "text": "It cannot handle graphs with negative weight cycles", "isCorrect": true },
+        { "text": "It only works on undirected graphs", "isCorrect": false },
+        { "text": "It is slower than Dijkstra's in all cases", "isCorrect": false },
+        { "text": "It requires all edge weights to be positive", "isCorrect": false }
+      ]
+    }
+  ]
+}

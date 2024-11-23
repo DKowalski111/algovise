@@ -30,6 +30,7 @@ const Registration = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.token); // Przechowywanie tokenu
+      localStorage.setItem("id", data.id);
       navigate("/");
     } catch (error: any) {
       setError(error.message); // Wyświetlenie błędu w UI
