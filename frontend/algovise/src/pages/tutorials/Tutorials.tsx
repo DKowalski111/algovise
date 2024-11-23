@@ -10,11 +10,11 @@ interface Tutorial {
 // Define a list of tutorials
 const tutorials: Tutorial[] = [
   { id: 1, title: 'Fundamentals of Graph Theory' },
-  { id: 2, title: 'Fundamental Graph Algorithms' },
+  { id: 2, title: 'Basic Graph Algorithms' },
   { id: 3, title: 'Advanced Graph Algorithms' },
-  { id: 4, title: 'Classic Problems' },
-  { id: 5, title: 'Algorithms in Vectored Graphs' },
-  { id: 6, title: 'Real Life Graph Algorithms Examples' },
+  { id: 4, title: 'Classic Problems in Graph Theory' },
+  { id: 5, title: 'Algorithms for Directed Graphs' },
+  { id: 6, title: 'Real-World Examples of Graph Algorithms' },
 ];
 
 const Tutorials: React.FC = () => {
