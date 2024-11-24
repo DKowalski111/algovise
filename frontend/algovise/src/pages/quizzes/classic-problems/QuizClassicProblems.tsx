@@ -38,6 +38,9 @@ const QuizClassicProblems: React.FC = () => {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Map<number, number | null>>(new Map());
   const [submitted, setSubmitted] = useState(false);
+  const [submittedAnswers, setSubmittedAnswers] = useState<Map<number, boolean>>(new Map());
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
 
   useEffect(() => {
     fetch("/quizzes/classic-problems/classic-problems.json")
@@ -56,7 +59,13 @@ const QuizClassicProblems: React.FC = () => {
   }, []);
 
   const handleAnswerClick = (questionId: number, answerIndex: number) => {
-    setSelectedAnswers((prevSelected) => new Map(prevSelected).set(questionId, answerIndex));
+    if (submitted) return;
+
+    setSelectedAnswers((prevSelected) => {
+      const updatedAnswers = new Map(prevSelected);
+      updatedAnswers.set(questionId, answerIndex);
+      return updatedAnswers;
+    });
   };
 
   const handleSubmit = async () => {
@@ -67,11 +76,24 @@ const QuizClassicProblems: React.FC = () => {
       return;
     }
 
-    const allCorrect = quizData.questions.every((question) => {
+    const newSubmittedAnswers = new Map<number, boolean>();
+    let localCorrectAnswersCount = 0;
+    setCorrectAnswersCount(0);
+
+    quizData.questions.forEach((question) => {
       const selectedAnswerIndex = selectedAnswers.get(question.id);
-      return question.answers[selectedAnswerIndex ?? -1]?.isCorrect ?? false;
+      const isCorrect = question.answers[selectedAnswerIndex ?? -1]?.isCorrect ?? false;
+      newSubmittedAnswers.set(question.id, isCorrect);
+
+      if (isCorrect) {
+        localCorrectAnswersCount++;
+      }
     });
 
+    setSubmittedAnswers(newSubmittedAnswers);
+    setCorrectAnswersCount(localCorrectAnswersCount);
+
+    const allCorrect = Array.from(newSubmittedAnswers.values()).every((correct) => correct);
 
     if (allCorrect) {
       const userId = getUserId();
@@ -84,11 +106,11 @@ const QuizClassicProblems: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/completed-quizzes?userId=${userId}&quizId=${4}`,
+          `http://localhost:8080/completed-quizzes?userId=${userId}&quizId=4`,
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           }
@@ -105,6 +127,12 @@ const QuizClassicProblems: React.FC = () => {
     } else {
       console.log("Some answers are incorrect. Quiz not marked as completed.");
     }
+
+    setIsPopupVisible(true);
+  };
+
+  const handleTryAgain = () => {
+    window.location.reload();
   };
 
   if (!quizData) {
@@ -113,6 +141,23 @@ const QuizClassicProblems: React.FC = () => {
 
   return (
     <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center flex-wrap justify-content-xxl-center align-items-xxl-center">
+      <div
+        className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
+        onClick={() => setIsPopupVisible(false)}
+      />
+
+      {isPopupVisible && (
+        <div className="popup">
+          <h1>Your score is</h1>
+          <p>{correctAnswersCount} / {quizData.questions.length}</p>
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsPopupVisible(false)}
+          >
+            OK
+          </button>
+        </div>
+      )}
       {quizData.questions.map((question, index) => (
         <div
           key={question.id}
@@ -141,11 +186,13 @@ const QuizClassicProblems: React.FC = () => {
           >
             {question.answers.map((answer, answerIndex) => {
               const isSelected = selectedAnswers.get(question.id) === answerIndex;
+              const isSubmitted = submittedAnswers.has(question.id);
               const isCorrect = answer.isCorrect;
-              const borderColor = submitted
-                ? isCorrect
+
+              const borderColor = isSubmitted
+                ? isSelected && isCorrect
                   ? "green"
-                  : isSelected
+                  : isSelected && !isCorrect
                     ? "red"
                     : "var(--bs-warning)"
                 : isSelected
@@ -161,7 +208,7 @@ const QuizClassicProblems: React.FC = () => {
                     borderStyle: "solid",
                     borderColor: borderColor,
                     width: "40%",
-                    cursor: "pointer",
+                    cursor: submitted ? "not-allowed" : "pointer",
                   }}
                   onClick={() => handleAnswerClick(question.id, answerIndex)}
                 >
@@ -179,13 +226,23 @@ const QuizClassicProblems: React.FC = () => {
       ))}
 
       <div className="d-flex justify-content-center mt-4">
-        <button
-          onClick={handleSubmit}
-          className="btn btn-primary"
-          style={{ padding: "10px 20px", fontSize: "16px", borderRadius: "10px" }}
-        >
-          Submit
-        </button>
+        {submitted ? (
+          <button
+            onClick={handleTryAgain}
+            className="btn btn-secondary"
+            style={{ padding: "10px 20px", fontSize: "16px", borderRadius: "10px" }}
+          >
+            Try Again
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            className="btn btn-primary"
+            style={{ padding: "10px 20px", fontSize: "16px", borderRadius: "10px" }}
+          >
+            Submit
+          </button>
+        )}
       </div>
     </div>
   );
