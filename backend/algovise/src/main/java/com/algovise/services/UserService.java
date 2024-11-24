@@ -93,4 +93,31 @@ public class UserService
 				.orElseThrow(() -> new RuntimeException(String.format(USER_NOT_FOUND_ERR_MSG, id)));
 		userRepository.delete(user);
 	}
+
+	public UserDto updateName(Long id, String newName) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setName(newName);
+
+		return userMapper.toUserDto(userRepository.save(user));
+	}
+
+	public UserDto updateEmail(Long id, String newEmail) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setEmail(newEmail);
+
+		return userMapper.toUserDto(userRepository.save(user));
+	}
+
+	public UserDto updatePassword(Long id, char[] password) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setPassword(passwordEncoder.encode(CharBuffer.wrap(password)));
+
+		return userMapper.toUserDto(userRepository.save(user));
+	}
 }

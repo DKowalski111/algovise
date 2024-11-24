@@ -3,7 +3,15 @@ export const getToken = () => {
 };
 
 export const getUserId = () => {
-  return localStorage.getItem('id'); // Retrieve the token from localStorage
+  return localStorage.getItem('id');
+};
+
+export const getUserName = () => {
+  return localStorage.getItem('name');
+};
+
+export const getUserEmail = () => {
+  return localStorage.getItem('email');
 };
 
 export const setToken = (token: string) => {

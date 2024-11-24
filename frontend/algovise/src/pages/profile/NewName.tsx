@@ -1,38 +1,45 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Do przekierowania użytkownika
-import Credentials from "../../types/login/Credentials";
+import { useNavigate } from "react-router-dom"; // Hook to navigate
+import { getToken, getUserId, setToken } from "../../utils/AuthUtils";
 
-const Login = () => {
-  const [name, setName] = useState(""); // Stan dla nazwy użytkownika
-  const [password, setPassword] = useState(""); // Stan dla hasła
-  const [error, setError] = useState(""); // Stan dla błędów
-  const navigate = useNavigate(); // Hook do przekierowania
+const NewName: React.FC = () => {
+  const [newName, setNewName] = useState<string>(""); // State for the new name input
+  const [error, setError] = useState<string>(""); // State for error messages
+  const [success, setSuccess] = useState<string>(""); // State for success messages
+  const navigate = useNavigate(); // Hook to navigate
 
   const handleSubmit = async (event: React.FormEvent) => {
+    const token = getToken();
     event.preventDefault();
-    setError(""); // Reset błędów
+    setError(""); // Reset errors
+    setSuccess(""); // Reset success message
+    console.log(token);
+    console.log(newName);
 
-    const credentials = new Credentials(name, password);
+    if (!newName.trim()) {
+      setError("Name cannot be empty.");
+      return;
+    }
 
     try {
-      const response = await fetch("http://localhost:8080/login", {
+      const response = await fetch("http://localhost:8080/user/update-name", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({ id: getUserId(), name: newName }),
       });
 
       if (!response.ok) {
-        throw new Error("Invalid login credentials");
+        throw new Error("Failed to update name.");
       }
 
       const data = await response.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("id", data.id);
+      setToken(data.token);
       localStorage.setItem("name", data.name);
-      localStorage.setItem("email", data.email);
-      navigate("/");
+      setSuccess("Name updated successfully!");
+      navigate("/profile"); // Navigate to the profile page or any other page after successful update
     } catch (error: any) {
       setError(error.message);
     }
@@ -50,39 +57,34 @@ const Login = () => {
       >
         <header>
           <h1 className="my-5" style={{ color: "var(--bs-body-bg)", textAlign: "center" }}>
-            Login
+            Change Name
           </h1>
         </header>
         <div style={{ color: "var(--bs-body-bg)", textAlign: "center" }} className="d-flex flex-column">
           {error && <p style={{ color: "red" }}>{error}</p>}
+          {success && <p style={{ color: "green" }}>{success}</p>}
           <form onSubmit={handleSubmit}>
-            <p style={{ color: "var(--bs-body-bg)" }}>USERNAME</p>
+            <p style={{ color: "var(--bs-body-bg)" }}>New Name</p>
             <input
               className="my-2 mt-0 mb-4"
               type="text"
               style={{ width: "100%" }}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <p style={{ color: "var(--bs-body-bg)" }}>PASSWORD</p>
-            <input
-              className="my-2 mt-0 mb-4"
-              type="password"
-              style={{ width: "100%" }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
               required
             />
             <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
               <button type="submit" className="btn btn-primary" style={{ width: "48%" }}>
-                Login
+                Update Name
               </button>
-              <Link to="/registration">
-                <button type="button" className="btn btn-secondary" style={{ width: "48%" }}>
-                  Create Account
-                </button>
-              </Link>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: "48%" }}
+                onClick={() => navigate("/profile")} // Navigate back to profile
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>
@@ -91,4 +93,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default NewName;

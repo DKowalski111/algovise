@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
       </svg>
     },
     {
-      title: "Account", path: "/account", icon: <svg className="fs-1 mx-3 my-3" xmlns="http://www.w3.org/2000/svg" enableBackground="new 0 0 24 24" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style={{ color: "#ffa0cc" }}>
+      title: "Profile", path: "/profile", icon: <svg className="fs-1 mx-3 my-3" xmlns="http://www.w3.org/2000/svg" enableBackground="new 0 0 24 24" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style={{ color: "#ffa0cc" }}>
         <g>
           <rect fill="none" height="24" width="24"></rect>
         </g>

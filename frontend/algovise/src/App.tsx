@@ -20,6 +20,10 @@ import QuizBasicGraphAlgorithms from './pages/quizzes/basic-graph-algorithms/Qui
 import QuizClassicProblems from './pages/quizzes/classic-problems/QuizClassicProblems';
 import QuizFundamentalsOfGraphTheory from './pages/quizzes/fundamentals-of-graph-theory/QuizFundamentalsOfGraphTheory';
 import QuizRealWorldGraphAlgorithms from './pages/quizzes/real-world-graph-algorithms/QuizRealWorldGraphAlgorithms';
+import Profile from './pages/profile/Profile';
+import NewName from './pages/profile/NewName';
+import NewEmail from './pages/profile/NewEmail';
+import NewPassword from './pages/profile/NewPassword';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
@@ -53,7 +57,10 @@ function App() {
           <Route path="/quizzes/classic-problems" element={<QuizClassicProblems />} />
           <Route path="/quizzes/fundamentals-of-graph-theory" element={<QuizFundamentalsOfGraphTheory />} />
           <Route path="/quizzes/real-world-graph-algorithms" element={<QuizRealWorldGraphAlgorithms />} />
-
+          <Route path='/profile' element={<Profile />} />
+          <Route path='/profile/update-name' element={<NewName />} />
+          <Route path='/profile/update-email' element={<NewEmail />} />
+          <Route path='/profile/update-password' element={<NewPassword />} />
         </Route>
       </Routes>
     </div>
