@@ -24,6 +24,7 @@ import Profile from './pages/profile/Profile';
 import NewName from './pages/profile/NewName';
 import NewEmail from './pages/profile/NewEmail';
 import NewPassword from './pages/profile/NewPassword';
+import GraphCreator from './pages/graph-creator/GraphCreator';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
@@ -61,6 +62,7 @@ function App() {
           <Route path='/profile/update-name' element={<NewName />} />
           <Route path='/profile/update-email' element={<NewEmail />} />
           <Route path='/profile/update-password' element={<NewPassword />} />
+          <Route path='/create-graph' element={<GraphCreator />} />
         </Route>
       </Routes>
     </div>
