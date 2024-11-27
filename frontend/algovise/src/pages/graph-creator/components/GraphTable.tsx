@@ -3,9 +3,16 @@ import React from "react";
 interface TableProps {
   headers: string[];
   rows: string[][];
+  onRowsUpdate: (updatedRows: string[][]) => void;
 }
 
-const GraphTable: React.FC<TableProps> = ({ headers, rows }) => {
+const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate }) => {
+  const handleCellChange = (rowIndex: number, cellIndex: number, newValue: string) => {
+    const updatedRows = [...rows];
+    updatedRows[rowIndex][cellIndex] = newValue;
+    onRowsUpdate(updatedRows);
+  };
+
   return (
     <div className="table-responsive" style={{ background: "var(--bs-body-color)" }}>
       <table className="table">
@@ -47,7 +54,19 @@ const GraphTable: React.FC<TableProps> = ({ headers, rows }) => {
                     color: "var(--bs-table-bg)",
                   }}
                 >
-                  {cell}
+                  <input
+                    type="text"
+                    value={cell}
+                    className="form-control"
+                    style={{
+                      textAlign: "center",
+                      background: "transparent",
+                      color: "var(--bs-table-bg)",
+                      border: "none",
+                      outline: "none",
+                    }}
+                    onChange={(e) => handleCellChange(rowIndex, cellIndex, e.target.value)}
+                  />
                 </td>
               ))}
             </tr>

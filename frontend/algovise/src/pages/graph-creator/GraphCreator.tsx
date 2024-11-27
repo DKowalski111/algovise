@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import GraphVisualizer from "./components/GraphVisualiser";
 import GraphTable from "./components/GraphTable";
 
@@ -22,23 +22,49 @@ const graphData = {
 };
 
 const GraphCreator: React.FC = () => {
-  const headers1 = ["Name", "Directed", "Weighted"];
-  const rows1 = [["MyGraph", "No", "Yes"]];
+  const graphBasicsTableHeader = ["Name", "Directed", "Weighted"];
+  const graphBasicsTableRow = [["MyGraph", "No", "Yes"]];
 
-  const headers2 = ["Source", "Destination", "Weight"];
-  const rows2 = [
-    ["1", "2", "2"],
-    ["2", "3", "3"],
-  ];
+  const graphDataTableHeader = ["Source", "Destination", "Weight"];
+
+  const getLabelById = (id: number, nodes: { id: number; label: string }[]) => {
+    const node = nodes.find((node) => node.id === id);
+    return node ? node.label : `Unknown (${id})`;
+  };
+
+  const initialRows = graphData.edges.map((edge) => [
+    getLabelById(edge.source, graphData.nodes),
+    getLabelById(edge.target, graphData.nodes),
+    edge.weight.toString(),
+  ]);
+
+  const [rows, setRows] = useState<string[][]>(initialRows);
+
+  const handleRowsUpdate = (updatedRows: string[][]) => {
+    setRows(updatedRows);
+  };
+
+  const getUpdatedEdges = () => {
+    return rows.map(row => {
+      const source = graphData.nodes.find(node => node.label === row[0])?.id || 0;
+      const target = graphData.nodes.find(node => node.label === row[1])?.id || 0;
+      const weight = parseInt(row[2], 10);
+      return { source, target, weight };
+    });
+  };
 
   return (
-    <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
-      <GraphTable headers={headers1} rows={rows1} />
+    <div className="d-flex flex-column justify-content-center align-items-center">
+      <GraphTable
+        headers={graphBasicsTableHeader}
+        rows={graphBasicsTableRow}
+        onRowsUpdate={() => { }}
+      />
       <button className="btn btn-primary" type="button">
         Choose Algorithm
       </button>
       <div
-        className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4"
+        className="d-flex flex-column justify-content-center align-items-center mx-3 my-5 py-4 px-4"
         style={{
           borderStyle: "solid",
           borderColor: "var(--bs-body-bg)",
@@ -46,9 +72,13 @@ const GraphCreator: React.FC = () => {
           width: "40%",
         }}
       >
-        <GraphVisualizer nodes={graphData.nodes} edges={graphData.edges} />
+        <GraphVisualizer nodes={graphData.nodes} edges={getUpdatedEdges()} />
       </div>
-      <GraphTable headers={headers2} rows={rows2} />
+      <GraphTable
+        headers={graphDataTableHeader}
+        rows={rows}
+        onRowsUpdate={handleRowsUpdate}
+      />
       <a
         className="btn btn-primary ms-md-2 my-5 mx-5"
         role="button"

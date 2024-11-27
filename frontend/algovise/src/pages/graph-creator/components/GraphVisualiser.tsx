@@ -1,4 +1,3 @@
-// GraphVisualizer.tsx
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
@@ -23,6 +22,8 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
       .select(svgRef.current)
       .attr("width", width)
       .attr("height", height);
+
+    svg.selectAll("*").remove();
 
     const simulation = d3
       .forceSimulation(nodes)
