@@ -1,5 +1,6 @@
 package com.algovise.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,7 +13,21 @@ public class Node {
 
     private String label;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "graph_id", nullable = false)
     private Graph graph;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return id != null && id.equals(node.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

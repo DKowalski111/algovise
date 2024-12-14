@@ -1,5 +1,6 @@
 package com.algovise.controllers;
 
+import com.algovise.dtos.EdgeDto;
 import com.algovise.entities.Edge;
 import com.algovise.entities.Graph;
 import com.algovise.entities.Node;
@@ -34,16 +35,16 @@ public class GraphController {
         return ResponseEntity.ok(createdGraph);
     }
 
-    @PostMapping("/{id}/nodes")
-    public ResponseEntity<Graph> addNodeToGraph(@PathVariable Long id, @RequestBody Node node) {
-        Graph updatedGraph = graphService.addNodeToGraph(id, node);
-        return ResponseEntity.ok(updatedGraph);
+    @PostMapping("/{graphId}/nodes")
+    public ResponseEntity<Node> addNodeToGraph(@PathVariable Long graphId, @RequestBody Node node) {
+        Node createdNode = graphService.addNodeToGraph(graphId, node);
+        return ResponseEntity.ok(createdNode);
     }
 
-    @PostMapping("/{id}/edges")
-    public ResponseEntity<Graph> addEdgeToGraph(@PathVariable Long id, @RequestBody Edge edge) {
-        Graph updatedGraph = graphService.addEdgeToGraph(id, edge);
-        return ResponseEntity.ok(updatedGraph);
+    @PostMapping("/{graphId}/edges")
+    public ResponseEntity<Edge> addEdgeToGraph(@PathVariable Long graphId, @RequestBody EdgeDto edgeDto) {
+        Edge createdEdge = graphService.addEdgeToGraph(graphId, edgeDto);
+        return ResponseEntity.ok(createdEdge);
     }
 
     @PutMapping("/{id}")

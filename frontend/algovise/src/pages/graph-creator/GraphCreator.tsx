@@ -1,57 +1,161 @@
-import React, { useState } from "react";
-import GraphVisualizer from "./components/GraphVisualiser";
+import React, { useState, useEffect } from "react";
+import GraphVisualizer, { GraphNode } from "./components/GraphVisualiser";
 import GraphTable from "./components/GraphTable";
-
-const graphData = {
-  nodes: [
-    { id: 0, label: "A" },
-    { id: 1, label: "B" },
-    { id: 2, label: "C" },
-    { id: 3, label: "D" },
-    { id: 4, label: "E" },
-  ],
-  edges: [
-    { source: 0, target: 1, weight: 2 },
-    { source: 0, target: 2, weight: 4 },
-    { source: 1, target: 2, weight: 1 },
-    { source: 1, target: 3, weight: 7 },
-    { source: 2, target: 3, weight: 3 },
-    { source: 3, target: 4, weight: 1 },
-    { source: 2, target: 4, weight: 5 },
-  ],
-};
+import { getToken } from "../../utils/AuthUtils";
 
 const GraphCreator: React.FC = () => {
   const graphBasicsTableHeader = ["Name", "Directed", "Weighted"];
-  const graphBasicsTableRow = [["MyGraph", "No", "Yes"]];
+  const [graphBasicsTableRow, setGraphBasicsTableRow] = useState<string[][]>([["", "", ""]]);
 
-  const graphDataTableHeader = ["Source", "Destination", "Weight"];
+  const graphDataTableHeader = ["Source", "Destination", "Weight", "Actions"];
 
-  const getLabelById = (id: number, nodes: { id: number; label: string }[]) => {
-    const node = nodes.find((node) => node.id === id);
-    return node ? node.label : `Unknown (${id})`;
+  // Dynamic graph data states
+  const [nodes, setNodes] = useState<{ id: number; label: string }[]>([]);
+  const [edges, setEdges] = useState<{ source: number; target: number; weight: number }[]>([]);
+  const [rows, setRows] = useState<string[][]>([]);
+
+  const handleDeleteRow = (rowIndex: number) => {
+    const rowToDelete = rows[rowIndex];
+    const updatedRows = rows.filter((_, index) => index !== rowIndex);
+
+    const updatedEdges = edges.filter(
+      (edge) =>
+        !(nodes.find((node) => node.id === edge.source)?.label === rowToDelete[0] &&
+          nodes.find((node) => node.id === edge.target)?.label === rowToDelete[1])
+    );
+
+    // Remove unused nodes
+    const usedNodeIds = new Set(
+      updatedEdges.flatMap((edge) => [edge.source, edge.target])
+    );
+
+    const updatedNodes = nodes.filter((node) => usedNodeIds.has(node.id));
+
+    setRows(updatedRows);
+    setEdges(updatedEdges);
+    setNodes(updatedNodes);
   };
-
-  const initialRows = graphData.edges.map((edge) => [
-    getLabelById(edge.source, graphData.nodes),
-    getLabelById(edge.target, graphData.nodes),
-    edge.weight.toString(),
-  ]);
-
-  const [rows, setRows] = useState<string[][]>(initialRows);
 
   const handleRowsUpdate = (updatedRows: string[][]) => {
+    console.log("B4 handle rows update")
+    console.log(updatedRows)
     setRows(updatedRows);
+    console.log("After handle rows update")
+    console.log(rows)
   };
 
-  const getUpdatedEdges = () => {
-    return rows.map(row => {
-      const source = graphData.nodes.find(node => node.label === row[0])?.id || 0;
-      const target = graphData.nodes.find(node => node.label === row[1])?.id || 0;
-      const weight = parseInt(row[2], 10);
-      return { source, target, weight };
-    });
+  const handleAddRow = () => {
+    const newRow = ["", "", ""];
+    setRows([...rows, newRow]);
   };
+
+  const fetchGraphData = async (graphId: number) => {
+    const token = getToken();
+
+    try {
+      const response = await fetch(`http://localhost:8080/graphs/${graphId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch graph data");
+      }
+
+      const graph = await response.json();
+
+      // Update table headers with graph metadata
+      setGraphBasicsTableRow([
+        [
+          graph.name || "Unnamed Graph",
+          graph.directed ? "Yes" : "No",
+          graph.weighted ? "Yes" : "No",
+        ],
+      ]);
+
+      // Map graph nodes and edges to match expected structure
+      const fetchedNodes = graph.nodes.map((node: any) => ({
+        id: node.id,
+        label: node.label,
+      }));
+
+      console.log(graph.edges);
+      const fetchedEdges = graph.edges.map((edge: any) => ({
+        source: edge.source_id,
+        target: edge.target_id,
+        weight: edge.weight,
+      }));
+
+      const fetchedRows = fetchedEdges.map((edge: { source: any; target: any; weight: { toString: () => any; }; }) => [
+        fetchedNodes.find((node: { id: any; }) => node.id === edge.source)?.label || `Unknown (${edge.source})`,
+        fetchedNodes.find((node: { id: any; }) => node.id === edge.target)?.label || `Unknown (${edge.target})`,
+        edge.weight.toString(),
+      ]);
+
+      // Update state
+      setNodes(fetchedNodes);
+      setEdges(fetchedEdges);
+      setRows(fetchedRows);
+      console.log(fetchedNodes)
+      console.log(fetchedEdges)
+      console.log(fetchedRows)
+    } catch (error) {
+      console.error("Error fetching graph data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchGraphData(2);
+  }, []);
+
+  useEffect(() => {
+    const labelToNodeMap = new Map<string, GraphNode>();
+    const newEdges: { source: number; target: number; weight: number }[] = [];
+
+    // Add nodes from rows
+    rows.forEach((row) => {
+      const sourceLabel = row[0];
+      const targetLabel = row[1];
+
+      if (sourceLabel && !labelToNodeMap.has(sourceLabel)) {
+        const newNode = { id: labelToNodeMap.size, label: sourceLabel };
+        labelToNodeMap.set(sourceLabel, newNode);
+      }
+
+      if (targetLabel && !labelToNodeMap.has(targetLabel)) {
+        const newNode = { id: labelToNodeMap.size, label: targetLabel };
+        labelToNodeMap.set(targetLabel, newNode);
+      }
+    });
+
+    // Create edges
+    rows.forEach((row) => {
+      const sourceLabel = row[0];
+      const targetLabel = row[1];
+      const weight = parseInt(row[2], 10) || 0;
+
+      const sourceNode = labelToNodeMap.get(sourceLabel);
+      const targetNode = labelToNodeMap.get(targetLabel);
+
+      if (sourceNode && targetNode) {
+        newEdges.push({
+          source: sourceNode.id,
+          target: targetNode.id,
+          weight,
+        });
+      }
+    });
+
+    // Update nodes and edges
+    const newNodes = Array.from(labelToNodeMap.values());
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, [rows]);
+
+
 
   return (
     <div className="d-flex flex-column justify-content-center align-items-center">
@@ -59,6 +163,7 @@ const GraphCreator: React.FC = () => {
         headers={graphBasicsTableHeader}
         rows={graphBasicsTableRow}
         onRowsUpdate={() => { }}
+        onDeleteRow={() => { }}
       />
       <button className="btn btn-primary" type="button">
         Choose Algorithm
@@ -72,24 +177,25 @@ const GraphCreator: React.FC = () => {
           width: "40%",
         }}
       >
-        <GraphVisualizer nodes={graphData.nodes} edges={getUpdatedEdges()} />
+        <GraphVisualizer nodes={nodes} edges={edges} />
       </div>
       <GraphTable
-        headers={graphDataTableHeader}
+        headers={[...graphDataTableHeader]}
         rows={rows}
         onRowsUpdate={handleRowsUpdate}
+        onDeleteRow={handleDeleteRow}
       />
-      <a
+      <button
         className="btn btn-primary ms-md-2 my-5 mx-5"
-        role="button"
-        href="#"
+        type="button"
+        onClick={handleAddRow}
         style={{
           background: "var(--bs-orange)",
           borderStyle: "none",
         }}
       >
         New Row
-      </a>
+      </button>
     </div>
   );
 };

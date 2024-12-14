@@ -4,13 +4,20 @@ interface TableProps {
   headers: string[];
   rows: string[][];
   onRowsUpdate: (updatedRows: string[][]) => void;
+  onDeleteRow: (rowIndex: number) => void; // New prop to handle deletion
 }
 
-const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate }) => {
+const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate, onDeleteRow }) => {
+  const hasActionsColumn = headers.includes("Actions"); // Check for 'Actions'
+
   const handleCellChange = (rowIndex: number, cellIndex: number, newValue: string) => {
     const updatedRows = [...rows];
     updatedRows[rowIndex][cellIndex] = newValue;
+    console.log("B4 Table Updated Rows");
+    console.log(updatedRows);
     onRowsUpdate(updatedRows);
+    console.log("Table Updated Rows");
+    console.log(updatedRows);
   };
 
   return (
@@ -69,6 +76,25 @@ const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate }) => {
                   />
                 </td>
               ))}
+              {hasActionsColumn && (
+                <td className="text-center px-4 py-4"
+                  style={{
+                    background: "var(--bs-body-color)",
+                    borderRadius: "3px",
+                    borderStyle: "solid",
+                    borderColor: "var(--bs-table-bg)",
+                    borderBottomWidth: "3px",
+                    borderBottomStyle: "solid",
+                    color: "var(--bs-table-bg)",
+                  }}>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => onDeleteRow(rowIndex)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
