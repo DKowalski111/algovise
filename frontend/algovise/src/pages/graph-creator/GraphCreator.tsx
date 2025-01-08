@@ -2,17 +2,21 @@ import React, { useState, useEffect } from "react";
 import GraphVisualizer, { GraphNode } from "./components/GraphVisualiser";
 import GraphTable from "./components/GraphTable";
 import { getToken } from "../../utils/AuthUtils";
+import { useNavigate } from "react-router-dom";
+import { Graph } from "../../types/graph/Graph";
 
 const GraphCreator: React.FC = () => {
+  const navigate = useNavigate();
+
   const graphBasicsTableHeader = ["Name", "Directed", "Weighted"];
   const [graphBasicsTableRow, setGraphBasicsTableRow] = useState<string[][]>([["", "", ""]]);
 
   const graphDataTableHeader = ["Source", "Destination", "Weight", "Actions"];
 
-  // Dynamic graph data states
   const [nodes, setNodes] = useState<{ id: number; label: string }[]>([]);
   const [edges, setEdges] = useState<{ source: number; target: number; weight: number }[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
+  const [fetchedGraph, setFetchedGraph] = useState<Graph>();
 
   const handleDeleteRow = (rowIndex: number) => {
     const rowToDelete = rows[rowIndex];
@@ -37,11 +41,7 @@ const GraphCreator: React.FC = () => {
   };
 
   const handleRowsUpdate = (updatedRows: string[][]) => {
-    console.log("B4 handle rows update")
-    console.log(updatedRows)
     setRows(updatedRows);
-    console.log("After handle rows update")
-    console.log(rows)
   };
 
   const handleAddRow = () => {
@@ -66,6 +66,8 @@ const GraphCreator: React.FC = () => {
       }
 
       const graph = await response.json();
+      setFetchedGraph(graph);
+      console.log(graph);
 
       // Update table headers with graph metadata
       setGraphBasicsTableRow([
@@ -99,9 +101,6 @@ const GraphCreator: React.FC = () => {
       setNodes(fetchedNodes);
       setEdges(fetchedEdges);
       setRows(fetchedRows);
-      console.log(fetchedNodes)
-      console.log(fetchedEdges)
-      console.log(fetchedRows)
     } catch (error) {
       console.error("Error fetching graph data:", error);
     }
@@ -165,7 +164,7 @@ const GraphCreator: React.FC = () => {
         onRowsUpdate={() => { }}
         onDeleteRow={() => { }}
       />
-      <button className="btn btn-primary" type="button">
+      <button className="btn btn-primary" type="button" onClick={() => navigate('/choose-algorithm', { state: { nodes, edges, graphName: fetchedGraph?.name, directed: fetchedGraph?.directed, weighted: fetchedGraph?.weighted } })}>
         Choose Algorithm
       </button>
       <div

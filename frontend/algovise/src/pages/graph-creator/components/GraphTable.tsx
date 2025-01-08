@@ -4,7 +4,7 @@ interface TableProps {
   headers: string[];
   rows: string[][];
   onRowsUpdate: (updatedRows: string[][]) => void;
-  onDeleteRow: (rowIndex: number) => void; // New prop to handle deletion
+  onDeleteRow: (rowIndex: number) => void;
 }
 
 const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate, onDeleteRow }) => {
