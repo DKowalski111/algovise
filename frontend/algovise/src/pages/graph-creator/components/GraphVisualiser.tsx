@@ -6,9 +6,15 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   label: string;
 }
 
+interface GraphEdge {
+  source: number;
+  target: number;
+  weight: number;
+}
+
 interface GraphVisualizerProps {
   nodes: GraphNode[];
-  edges: { source: number; target: number; weight: number }[];
+  edges: GraphEdge[];
 }
 
 const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
@@ -25,13 +31,29 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
 
     svg.selectAll("*").remove();
 
+    // Define arrow marker if you have a directed graph:
+    // (Optional; remove if not needed)
+    const defs = svg.append("defs");
+    defs
+      .append("marker")
+      .attr("id", "arrow")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 15)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#999");
+
     const simulation = d3
       .forceSimulation(nodes)
       .force("link", d3.forceLink(edges).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-150))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    // Add the links
+    // Links
     const linkElements = svg
       .selectAll(".link")
       .data(edges)
@@ -39,9 +61,22 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
       .append("line")
       .attr("class", "link")
       .attr("stroke", "#999")
-      .attr("stroke-width", 2);
+      .attr("stroke-width", 2)
+      .attr("marker-end", "url(#arrow)"); // optional, for directed edges
 
-    // Add the nodes with drag behavior
+    // **Add text for the edge weights**
+    const edgeLabelElements = svg
+      .selectAll(".edge-label")
+      .data(edges)
+      .enter()
+      .append("text")
+      .attr("class", "edge-label")
+      .attr("font-size", 12)
+      .attr("fill", "orange")
+      .attr("dy", -5)
+      .text((d) => d.weight);
+
+    // Nodes
     const nodeElements = svg
       .selectAll(".node")
       .data(nodes)
@@ -59,8 +94,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
             event.subject.fy = event.y;
           })
           .on("drag", (event) => {
-            // Constrain the node inside the box during dragging
-            const margin = 10; // margin to avoid nodes touching the boundary
+            const margin = 10;
             event.subject.fx = Math.min(Math.max(event.x, margin), width - margin);
             event.subject.fy = Math.min(Math.max(event.y, margin), height - margin);
           })
@@ -71,8 +105,8 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
           })
       );
 
-    // Add the node labels
-    svg
+    // Node labels
+    const nodeLabelElements = svg
       .selectAll(".label")
       .data(nodes)
       .enter()
@@ -83,7 +117,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
       .attr("fill", "red")
       .text((d: any) => d.label);
 
-    // Update positions on each tick of the simulation
+    // On every tick, update positions
     simulation.on("tick", () => {
       linkElements
         .attr("x1", (d: any) => d.source.x)
@@ -91,18 +125,27 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
 
-      nodeElements
-        .attr("cx", (d: any) => Math.min(Math.max(d.x, 10), width - 10))
-        .attr("cy", (d: any) => Math.min(Math.max(d.y, 10), height - 10));
+      edgeLabelElements
+        .attr("x", (d: any, i: number) => {
+          const midX = (d.source.x + d.target.x) / 2;
+          return midX + i * 10;
+        })
+        .attr("y", (d: any) => {
+          const midY = (d.source.y + d.target.y) / 2;
+          return midY;
+        });
 
-      svg
-        .selectAll(".label")
+      nodeElements
+        .attr("cx", (d: any) => Math.min(Math.max(d.x, 10), width - 15))
+        .attr("cy", (d: any) => Math.min(Math.max(d.y, 10), height - 15));
+
+      nodeLabelElements
         .attr("x", (d: any) => d.x)
         .attr("y", (d: any) => d.y);
     });
   }, [nodes, edges]);
 
-  return <svg ref={svgRef}></svg>;
+  return <svg ref={svgRef} />;
 };
 
 export default GraphVisualizer;

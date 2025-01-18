@@ -42,9 +42,6 @@ const GraphCreator: React.FC = () => {
     setRows(updatedRows);
     setEdges(updatedEdges);
     setNodes(updatedNodes);
-    console.log(updatedRows);
-    console.log(updatedEdges);
-    console.log(updatedNodes);
   };
 
 
@@ -109,7 +106,6 @@ const GraphCreator: React.FC = () => {
 
       const responseJson = await response.json();
       const updatedNodes = responseJson.map((node: { id: any; label: any; }) => ({ id: node.id, label: node.label }));
-      setNodes(updatedNodes);
       return updatedNodes;
     } catch (error) { }
   };
@@ -119,8 +115,6 @@ const GraphCreator: React.FC = () => {
     if (!fetchedGraph) return;
 
     const token = getToken();
-
-    console.log(updatedNodes)
 
     const edgesToBeSent = edges.map(({ id, source, target, weight }) => {
       const updatedSourceId =
@@ -141,12 +135,6 @@ const GraphCreator: React.FC = () => {
       };
     });
 
-    console.log(edgesToBeSent)
-
-    console.log(JSON.stringify(edgesToBeSent))
-
-
-
     try {
       const response = await fetch(`http://localhost:8080/graphs/${fetchedGraph.id}/edges`, {
         method: "POST",
@@ -161,21 +149,7 @@ const GraphCreator: React.FC = () => {
         throw new Error("Failed to save edges");
       }
 
-      const responseJson = await response.json();
-      const fetchedEdges = responseJson.edges.map((edge: { id: any; source_id: any; target_id: any; weight: any; }) => ({
-        id: edge.id ?? null,
-        source: edge.source_id,
-        target: edge.target_id,
-        weight: edge.weight,
-      }));
-
-      setEdges(fetchedEdges);
-      setRows(fetchedEdges.map((edge: { id: number, source: number; target: number; weight: { toString: () => any; }; }) => [
-        nodes.find((node) => node.id === edge.source)?.label || `Unknown (${edge.source})`,
-        nodes.find((node) => node.id === edge.target)?.label || `Unknown (${edge.target})`,
-        edge.weight.toString(),
-        edge.id
-      ]));
+      fetchGraphData(fetchedGraph.id)
     } catch (error) { }
   };
 
@@ -244,10 +218,6 @@ const GraphCreator: React.FC = () => {
       setNodes(fetchedNodes);
       setEdges(fetchedEdges);
       setRows(fetchedRows);
-
-      console.log("FETCHING NODES", fetchedNodes)
-      console.log("FETCHING EDGES", fetchedEdges)
-      console.log("FETCHING ROWS", fetchedRows)
 
     } catch (error) {
       console.error("Error fetching graph data:", error);
