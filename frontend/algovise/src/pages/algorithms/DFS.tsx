@@ -6,6 +6,25 @@ const DFS: React.FC = () => {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
 
+  const [stack, setStack] = useState<{ id: any; path: any[] }[]>([]);
+  const [visited, setVisited] = useState(new Set());
+  const [currentPath, setCurrentPath] = useState<(string | number)[]>([]);
+  const [adjacencyList, setAdjacencyList] = useState(new Map());
+  const [targetFound, setTargetFound] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  const steps = [
+    "1. Initialize a stack and add the start node.",
+    "2. Mark the start node as visited.",
+    "3. While the stack is not empty:",
+    "4. Pop the last node from the stack.",
+    "5. If the popped node is the target, return the path.",
+    "6. For each unvisited neighbor of the popped node, mark it as visited and push it to the stack.",
+    "7. If the target node is found, return it, else return 'No path exists'."
+  ];
+
+
   const location = useLocation();
   const nodes = location.state?.nodes || [];
   const edges = location.state?.edges || [];
@@ -113,6 +132,113 @@ const DFS: React.FC = () => {
   };
 
 
+  const initializeAlgorithm = () => {
+    if (!source || !destination) {
+      alert("Please provide both source and destination.");
+      return;
+    }
+
+    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
+    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
+
+    if (!sourceNode || !destinationNode) {
+      alert("Invalid source or destination.");
+      return;
+    }
+
+    const sourceId = sourceNode.id;
+    const destinationId = destinationNode.id;
+
+    const adjList = new Map();
+    edges.forEach((edge: { source: { id: any; }; target: { id: any; }; weight: any; }) => {
+      const src = edge.source.id;
+      const tgt = edge.target.id;
+
+      if (!adjList.has(src)) adjList.set(src, []);
+      adjList.get(src).push({ id: tgt, weight: edge.weight });
+
+      if (!directed) {
+        if (!adjList.has(tgt)) adjList.set(tgt, []);
+        adjList.get(tgt).push({ id: src, weight: edge.weight });
+      }
+    });
+
+    setAdjacencyList(adjList);
+    setStack([{ id: sourceId, path: [sourceId] }]);
+    setVisited(new Set());
+    setCurrentPath([]);
+    setTargetFound(false);
+    setInitialized(true);
+    setCurrentStepIndex(1); // Move to the first step
+  };
+
+  const nextStep = () => {
+    if (!initialized) {
+      initializeAlgorithm();
+      return;
+    }
+
+    if (stack.length === 0) {
+      alert("No path exists.");
+      setCurrentStepIndex((prev) => steps.length - 1); // Move to last step
+      return;
+    }
+
+    const newStack = [...stack];
+    const popped = newStack.pop();
+    setStack(newStack);
+
+    if (!popped) {
+      alert("Stack is empty.");
+      return;
+    }
+
+    setCurrentStepIndex((prev) => 4); // Step 4: "Pop the last node from the stack."
+
+    const { id, path } = popped;
+
+    if (id === nodes.find((node: { label: string }) => node.label === destination)?.id) {
+      setTargetFound(true);
+      const pathLabels = path.map(nodeId => nodes.find((node: { id: any }) => node.id === nodeId)?.label);
+
+      setTimeout(() => {
+        alert(`Path found: ${pathLabels.join(" -> ")}`);
+        resetAlgorithm();
+      }, 500); // Delay reset to allow step highlight
+
+      return;
+    }
+
+    if (!visited.has(id)) {
+      const newVisited = new Set(visited);
+      newVisited.add(id);
+      setVisited(newVisited);
+      setCurrentStepIndex((prev) => 6); // Step 6: "For each unvisited neighbor..."
+
+      const neighbors = adjacencyList.get(id) || [];
+      neighbors.forEach((neighbor: { id: unknown }) => {
+        if (!newVisited.has(neighbor.id)) {
+          newStack.push({ id: neighbor.id, path: [...path, neighbor.id] });
+        }
+      });
+
+      setStack(newStack);
+      setCurrentPath(path);
+    }
+  };
+
+
+  const resetAlgorithm = () => {
+    setStack([]);
+    setVisited(new Set());
+    setCurrentPath([]);
+    setAdjacencyList(new Map());
+    setTargetFound(false);
+    setInitialized(false);
+    setCurrentStepIndex(0);
+  };
+
+
 
   return (
     <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
@@ -172,42 +298,25 @@ const DFS: React.FC = () => {
           />
         </div>
       </div>
-      <button className="btn btn-primary" type="button" onClick={handleAlgorithmClick}>
-        Perform Algorithm
-      </button>
-      <div className="mt-4">
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          1. Initialize a queue and add the start node.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          2. Mark the start node as visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          3. While the queue is not empty:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          4. Dequeue the first node from the queue.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          5. If the dequeued node is the target:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Return the path from start to target.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          6. For each unvisited neighbor of the dequeued node:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Mark the neighbor as visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Add the neighbor to the queue.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          7. If the target node is not found, return "No path exists".
-        </p>
+      <div className="d-flex flex-row justify-content-center align-items-center">
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>Perform Algorithm</button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>Go Step-By-Step</button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>Reset</button>
       </div>
-
+      <div className="mt-4">
+        {steps.map((step, index) => (
+          <p
+            key={index}
+            className="text-center"
+            style={{
+              color: index === currentStepIndex ? "var(--bs-primary)" : "var(--bs-light)",
+              fontWeight: index === currentStepIndex ? "bold" : "normal"
+            }}
+          >
+            {step}
+          </p>
+        ))}
+      </div>
     </div>
   );
 };

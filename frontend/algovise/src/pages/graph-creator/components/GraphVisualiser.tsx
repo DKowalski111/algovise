@@ -15,8 +15,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
-    console.log(nodes);
-    console.log(edges);
     const width = 600;
     const height = 400;
 
@@ -27,7 +25,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
 
     svg.selectAll("*").remove();
 
-    // Define the simulation with forces
     const simulation = d3
       .forceSimulation(nodes)
       .force("link", d3.forceLink(edges).id((d: any) => d.id).distance(100))

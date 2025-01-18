@@ -38,4 +38,10 @@ public class Edge {
     public Long getTargetId() {
         return target != null ? target.getId() : null;
     }
+
+    @Override
+    public String toString()
+    {
+        return "Edge id: " + id + ", source id: " + source.getId() + ", target id: " + target.getId() + ", weight: " + weight;
+    }
 }

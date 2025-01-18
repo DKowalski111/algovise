@@ -37,4 +37,10 @@ public class Graph {
     public int hashCode() {
         return id != null ? id.hashCode() : 0; // Use ID for hashCode
     }
+
+    @Override
+    public String toString()
+    {
+        return "Graph id: " + id + ", name: " + name + ", directed: " + directed + ", weighted: " + weighted;
+    }
 }

@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.*;
 
 @RestController
 @AllArgsConstructor
@@ -36,15 +36,22 @@ public class GraphController {
     }
 
     @PostMapping("/{graphId}/nodes")
-    public ResponseEntity<Node> addNodeToGraph(@PathVariable Long graphId, @RequestBody Node node) {
-        Node createdNode = graphService.addNodeToGraph(graphId, node);
-        return ResponseEntity.ok(createdNode);
+    public ResponseEntity<List<Node>> addNodeToGraph(@PathVariable Long graphId, @RequestBody Node[] nodes) {
+        List<Node> createdNodes = new ArrayList<>();
+        for(Node node : nodes) {
+            createdNodes.add(graphService.addNodeToGraph(graphId, node));
+        }
+        return ResponseEntity.ok(createdNodes);
     }
 
     @PostMapping("/{graphId}/edges")
-    public ResponseEntity<Edge> addEdgeToGraph(@PathVariable Long graphId, @RequestBody EdgeDto edgeDto) {
-        Edge createdEdge = graphService.addEdgeToGraph(graphId, edgeDto);
-        return ResponseEntity.ok(createdEdge);
+    public ResponseEntity<List<Edge>> addEdgeToGraph(@PathVariable Long graphId, @RequestBody EdgeDto[] edgeDtos) {
+        removeNotExistingNodes(graphId, edgeDtos);
+        List<Edge> createdEdges = new ArrayList<>();
+        for(EdgeDto edgeDto : edgeDtos) {
+            createdEdges.add(graphService.addEdgeToGraph(graphId, edgeDto));
+        }
+        return ResponseEntity.ok(createdEdges);
     }
 
     @PutMapping("/{id}")
@@ -57,5 +64,44 @@ public class GraphController {
     public ResponseEntity<Void> deleteGraph(@PathVariable Long id) {
         graphService.deleteGraph(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private void removeNotExistingNodes(final Long graphId, final EdgeDto[] edges)
+    {
+        Graph graph = graphService.findGraphById(graphId).orElseThrow();
+
+        Set<Long> idsOfExistingEdges = new HashSet<>();
+        for(EdgeDto edgeDto : edges)
+        {
+            idsOfExistingEdges.add(edgeDto.getId());
+        }
+
+        Set<Long> idsOfExistingNodes = new HashSet<>();
+
+        for(EdgeDto edgeDto : edges)
+        {
+            idsOfExistingNodes.add(edgeDto.getSourceId());
+            idsOfExistingNodes.add(edgeDto.getTargetId());
+        }
+
+        System.out.println(idsOfExistingNodes);
+
+        for(Node node : graph.getNodes())
+        {
+            final Long nodeId = node.getId();
+            if (!idsOfExistingNodes.contains(nodeId))
+            {
+                Set<Long> idsOfEdgesToBeRemoved = new HashSet<>();
+                for(Edge edge : graph.getEdges())
+                {
+                    if(Objects.equals(edge.getSourceId(), nodeId) || Objects.equals(edge.getTargetId(), nodeId))
+                    {
+                        idsOfEdgesToBeRemoved.add(edge.getId());
+                    }
+                }
+                graphService.removeEdges(idsOfEdgesToBeRemoved);
+                graphService.removeNode(nodeId);
+            }
+        }
     }
 }

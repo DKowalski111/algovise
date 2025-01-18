@@ -14,7 +14,7 @@ public class Node {
     private String label;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "graph_id", nullable = false)
     private Graph graph;
 
@@ -29,5 +29,10 @@ public class Node {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public String toString(){
+        return "Node id: " + id + ", label: " + label;
     }
 }

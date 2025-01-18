@@ -14,7 +14,7 @@ const GraphCreator: React.FC = () => {
   const graphDataTableHeader = ["Source", "Destination", "Weight", "Actions"];
 
   const [nodes, setNodes] = useState<{ id: number; label: string }[]>([]);
-  const [edges, setEdges] = useState<{ source: number; target: number; weight: number }[]>([]);
+  const [edges, setEdges] = useState<{ id: number, source: any; target: any; weight: number }[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [fetchedGraph, setFetchedGraph] = useState<Graph>();
 
@@ -24,29 +24,175 @@ const GraphCreator: React.FC = () => {
 
     const updatedEdges = edges.filter(
       (edge) =>
-        !(nodes.find((node) => node.id === edge.source)?.label === rowToDelete[0] &&
-          nodes.find((node) => node.id === edge.target)?.label === rowToDelete[1])
+        !(
+          nodes.find((node) => node.id === edge.source?.id)?.label === rowToDelete[0] &&
+          nodes.find((node) => node.id === edge.target?.id)?.label === rowToDelete[1]
+        )
     );
 
-    // Remove unused nodes
     const usedNodeIds = new Set(
       updatedEdges.flatMap((edge) => [edge.source, edge.target])
     );
 
-    const updatedNodes = nodes.filter((node) => usedNodeIds.has(node.id));
+    const updatedNodes = nodes.filter((node) => {
+      const isUsed = usedNodeIds.has(node);
+      return isUsed;
+    });
 
     setRows(updatedRows);
     setEdges(updatedEdges);
     setNodes(updatedNodes);
+    console.log(updatedRows);
+    console.log(updatedEdges);
+    console.log(updatedNodes);
   };
+
+
+  const saveButtonClicked = async () => {
+    try {
+      await saveGraph();
+      const updatedNodes = await saveNodes();
+      await saveEdges(updatedNodes);
+    } catch (error) {
+      console.error("Error saving data:", error);
+    }
+  };
+
+  const saveGraph = async () => {
+    const token = getToken();
+    const graphData = {
+      id: fetchedGraph?.id,
+      name: graphBasicsTableRow[0][0],
+      directed: graphBasicsTableRow[0][1].toLowerCase() === "yes" || graphBasicsTableRow[0][1].toLowerCase() === "true",
+      weighted: graphBasicsTableRow[0][2].toLowerCase() === "yes" || graphBasicsTableRow[0][2].toLowerCase() === "true",
+    };
+
+
+    try {
+      const response = await fetch("http://localhost:8080/graphs", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(graphData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save graph");
+      }
+
+      setFetchedGraph(await response.json());
+      console.log("Save graph finished")
+    } catch (error) { }
+  };
+
+  const saveNodes = async () => {
+    if (!fetchedGraph) return;
+
+    const token = getToken();
+    const nodeData = nodes.map((node) => ({ id: node.id ?? null, label: node.label }));
+
+    try {
+      const response = await fetch(`http://localhost:8080/graphs/${fetchedGraph.id}/nodes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(nodeData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save nodes");
+      }
+
+      const responseJson = await response.json();
+      const updatedNodes = responseJson.map((node: { id: any; label: any; }) => ({ id: node.id, label: node.label }));
+      setNodes(updatedNodes);
+      return updatedNodes;
+    } catch (error) { }
+  };
+
+  const saveEdges = async (updatedNodes: { id: number; label: string }[]) => {
+
+    if (!fetchedGraph) return;
+
+    const token = getToken();
+
+    console.log(updatedNodes)
+
+    const edgesToBeSent = edges.map(({ id, source, target, weight }) => {
+      const updatedSourceId =
+        source?.id < 0
+          ? updatedNodes.find((node) => node.label === edges.find((e) => e.id === id)?.source?.label)?.id
+          : source?.id;
+
+      const updatedTargetId =
+        target?.id < 0
+          ? updatedNodes.find((node) => node.label === edges.find((e) => e.id === id)?.target?.label)?.id
+          : target?.id;
+
+      return {
+        id,
+        sourceId: updatedSourceId,
+        targetId: updatedTargetId,
+        weight,
+      };
+    });
+
+    console.log(edgesToBeSent)
+
+    console.log(JSON.stringify(edgesToBeSent))
+
+
+
+    try {
+      const response = await fetch(`http://localhost:8080/graphs/${fetchedGraph.id}/edges`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(edgesToBeSent),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save edges");
+      }
+
+      const responseJson = await response.json();
+      const fetchedEdges = responseJson.edges.map((edge: { id: any; source_id: any; target_id: any; weight: any; }) => ({
+        id: edge.id ?? null,
+        source: edge.source_id,
+        target: edge.target_id,
+        weight: edge.weight,
+      }));
+
+      setEdges(fetchedEdges);
+      setRows(fetchedEdges.map((edge: { id: number, source: number; target: number; weight: { toString: () => any; }; }) => [
+        nodes.find((node) => node.id === edge.source)?.label || `Unknown (${edge.source})`,
+        nodes.find((node) => node.id === edge.target)?.label || `Unknown (${edge.target})`,
+        edge.weight.toString(),
+        edge.id
+      ]));
+    } catch (error) { }
+  };
+
+
+  const handleGraphInformationUpdate = (updatedRows: string[][]) => {
+    setGraphBasicsTableRow(updatedRows);
+  }
 
   const handleRowsUpdate = (updatedRows: string[][]) => {
     setRows(updatedRows);
   };
 
+
   const handleAddRow = () => {
-    const newRow = ["", "", ""];
+    const newRow = ["", "", "", ""];
     setRows([...rows, newRow]);
+
   };
 
   const fetchGraphData = async (graphId: number) => {
@@ -67,9 +213,6 @@ const GraphCreator: React.FC = () => {
 
       const graph = await response.json();
       setFetchedGraph(graph);
-      console.log(graph);
-
-      // Update table headers with graph metadata
       setGraphBasicsTableRow([
         [
           graph.name || "Unnamed Graph",
@@ -78,29 +221,34 @@ const GraphCreator: React.FC = () => {
         ],
       ]);
 
-      // Map graph nodes and edges to match expected structure
       const fetchedNodes = graph.nodes.map((node: any) => ({
         id: node.id,
         label: node.label,
       }));
 
-      console.log(graph.edges);
+
       const fetchedEdges = graph.edges.map((edge: any) => ({
+        id: edge.id,
         source: edge.source_id,
         target: edge.target_id,
         weight: edge.weight,
       }));
 
-      const fetchedRows = fetchedEdges.map((edge: { source: any; target: any; weight: { toString: () => any; }; }) => [
+      const fetchedRows = fetchedEdges.map((edge: { id: number, source: any; target: any; weight: { toString: () => any; }; }) => [
         fetchedNodes.find((node: { id: any; }) => node.id === edge.source)?.label || `Unknown (${edge.source})`,
         fetchedNodes.find((node: { id: any; }) => node.id === edge.target)?.label || `Unknown (${edge.target})`,
         edge.weight.toString(),
+        edge.id
       ]);
 
-      // Update state
       setNodes(fetchedNodes);
       setEdges(fetchedEdges);
       setRows(fetchedRows);
+
+      console.log("FETCHING NODES", fetchedNodes)
+      console.log("FETCHING EDGES", fetchedEdges)
+      console.log("FETCHING ROWS", fetchedRows)
+
     } catch (error) {
       console.error("Error fetching graph data:", error);
     }
@@ -111,48 +259,56 @@ const GraphCreator: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const labelToNodeMap = new Map<string, GraphNode>();
-    const newEdges: { source: number; target: number; weight: number }[] = [];
+    const labelToNodeMap = new Map<string, { id: number; label: string }>();
+    const edgeSet = new Set<string>();
+    const newEdges: { id: number; source: number; target: number; weight: number }[] = [];
 
-    // Add nodes from rows
-    rows.forEach((row) => {
-      const sourceLabel = row[0];
-      const targetLabel = row[1];
-
-      if (sourceLabel && !labelToNodeMap.has(sourceLabel)) {
-        const newNode = { id: labelToNodeMap.size, label: sourceLabel };
-        labelToNodeMap.set(sourceLabel, newNode);
-      }
-
-      if (targetLabel && !labelToNodeMap.has(targetLabel)) {
-        const newNode = { id: labelToNodeMap.size, label: targetLabel };
-        labelToNodeMap.set(targetLabel, newNode);
-      }
+    nodes.forEach((node) => {
+      labelToNodeMap.set(node.label, node);
     });
 
-    // Create edges
+    let nextNodeId = nodes.length > 0 ? Math.min(-1, Math.min(...nodes.map(n => n.id)) - 1) : -1;
+
     rows.forEach((row) => {
       const sourceLabel = row[0];
       const targetLabel = row[1];
       const weight = parseInt(row[2], 10) || 0;
 
-      const sourceNode = labelToNodeMap.get(sourceLabel);
-      const targetNode = labelToNodeMap.get(targetLabel);
+      if (sourceLabel && targetLabel) {
+        if (!labelToNodeMap.has(sourceLabel)) {
+          labelToNodeMap.set(sourceLabel, { id: nextNodeId--, label: sourceLabel });
+        }
 
-      if (sourceNode && targetNode) {
-        newEdges.push({
-          source: sourceNode.id,
-          target: targetNode.id,
-          weight,
-        });
+        if (!labelToNodeMap.has(targetLabel)) {
+          labelToNodeMap.set(targetLabel, { id: nextNodeId--, label: targetLabel });
+        }
+
+        const sourceNode = labelToNodeMap.get(sourceLabel);
+        const targetNode = labelToNodeMap.get(targetLabel);
+
+        if (sourceNode && targetNode) {
+          const edgeKey = `${sourceNode.id}-${targetNode.id}`;
+          if (!edgeSet.has(edgeKey)) {
+            edgeSet.add(edgeKey);
+            newEdges.push({
+              id: row[3] !== "" ? parseInt(row[3]) : -1,
+              source: sourceNode.id,
+              target: targetNode.id,
+              weight,
+            });
+          }
+        }
       }
     });
 
-    // Update nodes and edges
-    const newNodes = Array.from(labelToNodeMap.values());
-    setNodes(newNodes);
+    const usedNodeIds = new Set(newEdges.flatMap(edge => [edge.source, edge.target]));
+    const filteredNodes = Array.from(labelToNodeMap.values()).filter(node => usedNodeIds.has(node.id));
+
+    setNodes(filteredNodes);
     setEdges(newEdges);
   }, [rows]);
+
+
 
 
 
@@ -161,7 +317,7 @@ const GraphCreator: React.FC = () => {
       <GraphTable
         headers={graphBasicsTableHeader}
         rows={graphBasicsTableRow}
-        onRowsUpdate={() => { }}
+        onRowsUpdate={handleGraphInformationUpdate}
         onDeleteRow={() => { }}
       />
       <button className="btn btn-primary" type="button" onClick={() => navigate('/choose-algorithm', { state: { nodes, edges, graphName: fetchedGraph?.name, directed: fetchedGraph?.directed, weighted: fetchedGraph?.weighted } })}>
@@ -184,17 +340,30 @@ const GraphCreator: React.FC = () => {
         onRowsUpdate={handleRowsUpdate}
         onDeleteRow={handleDeleteRow}
       />
-      <button
-        className="btn btn-primary ms-md-2 my-5 mx-5"
-        type="button"
-        onClick={handleAddRow}
-        style={{
-          background: "var(--bs-orange)",
-          borderStyle: "none",
-        }}
-      >
-        New Row
-      </button>
+      <div className="d-flex flex-row justify-content-center align-items-center">
+        <button
+          className="btn btn-primary ms-md-2 my-5 mx-5"
+          type="button"
+          onClick={handleAddRow}
+          style={{
+            background: "var(--bs-orange)",
+            borderStyle: "none",
+          }}
+        >
+          New Row
+        </button>
+        <button
+          className="btn btn-primary ms-md-2 my-5 mx-5"
+          type="button"
+          onClick={saveButtonClicked}
+          style={{
+            background: "var(--bs-orange)",
+            borderStyle: "none",
+          }}
+        >
+          Save Graph
+        </button>
+      </div>
     </div>
   );
 };

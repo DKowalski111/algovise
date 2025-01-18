@@ -13,11 +13,7 @@ const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate, onDelet
   const handleCellChange = (rowIndex: number, cellIndex: number, newValue: string) => {
     const updatedRows = [...rows];
     updatedRows[rowIndex][cellIndex] = newValue;
-    console.log("B4 Table Updated Rows");
-    console.log(updatedRows);
     onRowsUpdate(updatedRows);
-    console.log("Table Updated Rows");
-    console.log(updatedRows);
   };
 
   return (
@@ -47,7 +43,7 @@ const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate, onDelet
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
+              {row.slice(0, 3).map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
                   className="text-center px-4 py-4"
