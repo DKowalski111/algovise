@@ -188,7 +188,7 @@ const AStar: React.FC = () => {
         </table>
       </div>
       <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4" style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }} >
-        <GraphVisualizer nodes={nodes} edges={edges} />
+        <GraphVisualizer nodes={nodes} edges={edges} weighted={weighted} directed={directed} />
       </div>
       <h1 className="text-center" style={{ color: 'var(--bs-light)' }}>
         A* Algorithm - Find Shortest Path

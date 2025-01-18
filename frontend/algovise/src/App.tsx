@@ -34,6 +34,7 @@ import BellmanFord from './pages/algorithms/BellmanFord';
 import FloydWarshall from './pages/algorithms/FloydWarshall';
 import AStar from './pages/algorithms/AStar';
 import Prim from './pages/algorithms/Prim';
+import SavedGraphs from './pages/savedGraphs/SavedGraphs';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
@@ -81,6 +82,7 @@ function App() {
           <Route path='/floyd-warshall-algorithm' element={<FloydWarshall />} />
           <Route path='/a-star-algorithm' element={<AStar />} />
           <Route path='/prim-algorithm' element={<Prim />} />
+          <Route path='/saved-graphs' element={<SavedGraphs />} />
         </Route>
       </Routes>
     </div>

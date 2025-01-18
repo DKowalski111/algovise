@@ -124,8 +124,6 @@ const QuizClassicProblems: React.FC = () => {
       } catch (error) {
         console.error("Error marking quiz as completed:", error);
       }
-    } else {
-      console.log("Some answers are incorrect. Quiz not marked as completed.");
     }
 
     setIsPopupVisible(true);

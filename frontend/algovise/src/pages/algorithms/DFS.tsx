@@ -5,7 +5,6 @@ import GraphVisualizer from '../graph-creator/components/GraphVisualiser';
 const DFS: React.FC = () => {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
-
   const [stack, setStack] = useState<{ id: any; path: any[] }[]>([]);
   const [visited, setVisited] = useState(new Set());
   const [currentPath, setCurrentPath] = useState<(string | number)[]>([]);
@@ -13,15 +12,30 @@ const DFS: React.FC = () => {
   const [targetFound, setTargetFound] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
 
   const steps = [
-    "1. Initialize a stack and add the start node.",
-    "2. Mark the start node as visited.",
-    "3. While the stack is not empty:",
-    "4. Pop the last node from the stack.",
-    "5. If the popped node is the target, return the path.",
-    "6. For each unvisited neighbor of the popped node, mark it as visited and push it to the stack.",
-    "7. If the target node is found, return it, else return 'No path exists'."
+    "",
+    "Step 1: Initialize DFS.\n" +
+    "• Build the adjacency list from your edges.\n" +
+    "• Create an empty ‘visited’ set.\n" +
+    "• Push the source node onto the stack with an initial path containing only that node.\n",
+
+    "Step 2: Pop the last node from the stack.\n" +
+    "• This node becomes your 'current' node.\n" +
+    "• If it's the destination, you're done—return the path.\n" +
+    "• Otherwise, continue to the next step.\n",
+
+    "Step 3: For each unvisited neighbor, push it onto the stack.\n" +
+    "• Check the adjacency list for neighbors of the current node.\n" +
+    "• For each neighbor that hasn't been visited:\n" +
+    "   – Add it to the stack with the updated path.\n" +
+    "• Mark the current node as visited.\n",
+
+    "Step 4: No path found or algorithm ended.\n" +
+    "• If the stack is empty but you still haven't reached the destination, no path exists.\n" +
+    "• Otherwise, the algorithm ends after finding the destination or exhausting all possible paths.\n"
   ];
 
 
@@ -41,116 +55,96 @@ const DFS: React.FC = () => {
   };
 
   const handleAlgorithmClick = () => {
-    console.log("Source:", source);
-    console.log("Destination:", destination);
-
     if (!source || !destination) {
-      alert("Please provide both source and destination.");
+      setPopupMessage("Please provide both source and destination.");
+      setIsPopupVisible(true)
       return;
     }
 
-    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
-    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
-
-    console.log("Source Node:", sourceNode);
-    console.log("Destination Node:", destinationNode);
+    const sourceNode = nodes.find((node: { label: string }) => node.label === source);
+    const destinationNode = nodes.find((node: { label: string }) => node.label === destination);
 
     if (!sourceNode || !destinationNode) {
-      alert("Invalid source or destination.");
+      setPopupMessage("Invalid source or destination.");
+      setIsPopupVisible(true)
       return;
     }
 
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    console.log("Source ID:", sourceId);
-    console.log("Destination ID:", destinationId);
-
     const adjacencyList = new Map();
-    edges.forEach((edge: { source: { id: any; }; target: { id: any; }; weight: any; }) => {
-      const sourceId = edge.source.id; // Access the id from the source object
-      const targetId = edge.target.id; // Access the id from the target object
+    edges.forEach((edge: { source: { id: any }; target: { id: any }; weight: any }) => {
+      const src = edge.source.id;
+      const tgt = edge.target.id;
 
-      // Add source -> target edge
-      if (!adjacencyList.has(sourceId)) {
-        adjacencyList.set(sourceId, []);
+      // Add source -> target
+      if (!adjacencyList.has(src)) {
+        adjacencyList.set(src, []);
       }
-      adjacencyList.get(sourceId).push({ id: targetId, weight: edge.weight });
+      adjacencyList.get(src).push({ id: tgt, weight: edge.weight });
 
-      // If undirected, also add target -> source edge
+      // If undirected, add target -> source
       if (!directed) {
-        if (!adjacencyList.has(targetId)) {
-          adjacencyList.set(targetId, []);
+        if (!adjacencyList.has(tgt)) {
+          adjacencyList.set(tgt, []);
         }
-        adjacencyList.get(targetId).push({ id: sourceId, weight: edge.weight });
+        adjacencyList.get(tgt).push({ id: src, weight: edge.weight });
       }
     });
 
-    console.log("Adjacency List:", Array.from(adjacencyList.entries()));
-
     const stack = [{ id: sourceId, path: [sourceId] }];
-    console.log("Initial Stack:", stack);
-
     const visited = new Set();
 
+    // Perform DFS in one go
     while (stack.length > 0) {
-      console.log("Stack Before Pop:", stack);
       const popped = stack.pop();
-      if (!popped) {
-        console.log("Stack is empty or invalid.");
-        break;
-      }
+      if (!popped) break;
 
       const { id, path } = popped;
-      console.log("Popped from Stack:", { id, path });
-
       if (id === destinationId) {
         const pathLabels = path.map((nodeId) =>
-          nodes.find((node: { id: any; }) => node.id === nodeId)?.label
+          nodes.find((node: { id: any }) => node.id === nodeId)?.label
         );
-        alert(`Path found: ${pathLabels.join(" -> ")}`);
+        setPopupMessage(`Path found: ${pathLabels.join(" -> ")}`)
+        setIsPopupVisible(true);
         return;
       }
 
       if (!visited.has(id)) {
         visited.add(id);
-        console.log("Visited Nodes:", Array.from(visited));
-
         const neighbors = adjacencyList.get(id) || [];
-        console.log("Neighbors of Node:", id, neighbors);
-
-        neighbors.forEach((neighbor: { id: unknown; }) => {
+        neighbors.forEach((neighbor: { id: any }) => {
           if (!visited.has(neighbor.id)) {
             stack.push({ id: neighbor.id, path: [...path, neighbor.id] });
-            console.log("Pushed to Stack:", { id: neighbor.id, path: [...path, neighbor.id] });
           }
         });
       }
     }
 
-    alert("No path exists.");
+    setPopupMessage("No path exists.")
+    setIsPopupVisible(true);
   };
-
 
   const initializeAlgorithm = () => {
     if (!source || !destination) {
-      alert("Please provide both source and destination.");
+      setPopupMessage("Please provide both source and destination.");
+      setIsPopupVisible(true);
       return;
     }
 
-    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
-    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
+    const sourceNode = nodes.find((node: { label: string }) => node.label === source);
+    const destinationNode = nodes.find((node: { label: string }) => node.label === destination);
 
     if (!sourceNode || !destinationNode) {
-      alert("Invalid source or destination.");
+      setPopupMessage("Invalid source or destination.");
+      setIsPopupVisible(true);
       return;
     }
 
     const sourceId = sourceNode.id;
-    const destinationId = destinationNode.id;
-
     const adjList = new Map();
-    edges.forEach((edge: { source: { id: any; }; target: { id: any; }; weight: any; }) => {
+    edges.forEach((edge: { source: { id: any }; target: { id: any }; weight: any }) => {
       const src = edge.source.id;
       const tgt = edge.target.id;
 
@@ -169,7 +163,8 @@ const DFS: React.FC = () => {
     setCurrentPath([]);
     setTargetFound(false);
     setInitialized(true);
-    setCurrentStepIndex(1); // Move to the first step
+
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -179,8 +174,9 @@ const DFS: React.FC = () => {
     }
 
     if (stack.length === 0) {
-      alert("No path exists.");
-      setCurrentStepIndex((prev) => steps.length - 1); // Move to last step
+      setPopupMessage("No path exists.");
+      setIsPopupVisible(true)
+      setCurrentStepIndex(4);
       return;
     }
 
@@ -189,23 +185,25 @@ const DFS: React.FC = () => {
     setStack(newStack);
 
     if (!popped) {
-      alert("Stack is empty.");
+      setPopupMessage("Stack is empty.");
+      setIsPopupVisible(true)
       return;
     }
 
-    setCurrentStepIndex((prev) => 4); // Step 4: "Pop the last node from the stack."
+    // Now we want "Pop the last node from the stack" => that's step 2
+    setCurrentStepIndex(2);
 
     const { id, path } = popped;
+    const destinationId = nodes.find((node: { label: string; }) => node.label === destination)?.id;
 
-    if (id === nodes.find((node: { label: string }) => node.label === destination)?.id) {
+    if (id === destinationId) {
       setTargetFound(true);
-      const pathLabels = path.map(nodeId => nodes.find((node: { id: any }) => node.id === nodeId)?.label);
-
-      setTimeout(() => {
-        alert(`Path found: ${pathLabels.join(" -> ")}`);
-        resetAlgorithm();
-      }, 500); // Delay reset to allow step highlight
-
+      const pathLabels = path.map(nodeId =>
+        nodes.find((node: { id: any; }) => node.id === nodeId)?.label
+      );
+      setPopupMessage(`Path found: ${pathLabels.join(" -> ")}`);
+      setIsPopupVisible(true)
+      resetAlgorithm();
       return;
     }
 
@@ -213,10 +211,12 @@ const DFS: React.FC = () => {
       const newVisited = new Set(visited);
       newVisited.add(id);
       setVisited(newVisited);
-      setCurrentStepIndex((prev) => 6); // Step 6: "For each unvisited neighbor..."
+
+      // This is "For each unvisited neighbor, push it onto the stack" => step 3
+      setCurrentStepIndex(3);
 
       const neighbors = adjacencyList.get(id) || [];
-      neighbors.forEach((neighbor: { id: unknown }) => {
+      neighbors.forEach((neighbor: { id: unknown; }) => {
         if (!newVisited.has(neighbor.id)) {
           newStack.push({ id: neighbor.id, path: [...path, neighbor.id] });
         }
@@ -226,7 +226,6 @@ const DFS: React.FC = () => {
       setCurrentPath(path);
     }
   };
-
 
   const resetAlgorithm = () => {
     setStack([]);
@@ -238,46 +237,140 @@ const DFS: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-
-
   return (
-    <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
+    <div
+      className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
+                 justify-content-center align-items-center align-content-center flex-wrap
+                 justify-content-xxl-center align-items-xxl-center"
+    >
+      <div
+        className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
+        onClick={() => setIsPopupVisible(false)}
+      />
+
+      {isPopupVisible && (
+        <div className="popup">
+          <p>
+            {popupMessage}
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsPopupVisible(false)}
+          >
+            OK
+          </button>
+        </div>
+      )}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
             <tr>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Name
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Directed
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Weighted
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
-                MyGraph
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
+                {graphName}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {directed ? "Yes" : "No"}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {weighted ? "Yes" : "No"}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4" style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }} >
-        <GraphVisualizer nodes={nodes} edges={edges} />
+
+      <div
+        className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
+                   align-items-center align-content-start flex-wrap justify-content-xxl-center
+                   align-items-xxl-center mx-3 my-5 py-4 px-4"
+        style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }}
+      >
+        <GraphVisualizer nodes={nodes} edges={edges} weighted={weighted} directed={directed} />
       </div>
+
       <h1 className="text-center" style={{ color: 'var(--bs-light)' }}>
-        Depth-First Search Algorithm - Find Shortest Path
+        Depth-First Search Algorithm - Find Path
       </h1>
+
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -298,11 +391,19 @@ const DFS: React.FC = () => {
           />
         </div>
       </div>
+
       <div className="d-flex flex-row justify-content-center align-items-center">
-        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>Perform Algorithm</button>
-        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>Go Step-By-Step</button>
-        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>Reset</button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
+          Perform Algorithm
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>
+          Go Step-By-Step
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>
+          Reset
+        </button>
       </div>
+
       <div className="mt-4">
         {steps.map((step, index) => (
           <p
@@ -313,7 +414,12 @@ const DFS: React.FC = () => {
               fontWeight: index === currentStepIndex ? "bold" : "normal"
             }}
           >
-            {step}
+            {step.split("\n").map((line, i) => (
+              <React.Fragment key={i}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
           </p>
         ))}
       </div>

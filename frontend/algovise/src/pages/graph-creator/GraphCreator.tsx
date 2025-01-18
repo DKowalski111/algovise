@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import GraphVisualizer, { GraphNode } from "./components/GraphVisualiser";
 import GraphTable from "./components/GraphTable";
 import { getToken } from "../../utils/AuthUtils";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Graph } from "../../types/graph/Graph";
+
 
 const GraphCreator: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const GraphCreator: React.FC = () => {
   const [edges, setEdges] = useState<{ id: number, source: any; target: any; weight: number }[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [fetchedGraph, setFetchedGraph] = useState<Graph>();
+
+  const location = useLocation();
 
   const handleDeleteRow = (rowIndex: number) => {
     const rowToDelete = rows[rowIndex];
@@ -225,7 +228,7 @@ const GraphCreator: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchGraphData(2);
+    fetchGraphData(location.state?.graphId);
   }, []);
 
   useEffect(() => {
@@ -302,7 +305,12 @@ const GraphCreator: React.FC = () => {
           width: "40%",
         }}
       >
-        <GraphVisualizer nodes={nodes} edges={edges} />
+        <GraphVisualizer
+          nodes={nodes}
+          edges={edges}
+          weighted={graphBasicsTableRow[0][2].toLowerCase() === "yes" || graphBasicsTableRow[0][2].toLowerCase() === "true"}
+          directed={graphBasicsTableRow[0][1].toLowerCase() === "yes" || graphBasicsTableRow[0][1].toLowerCase() === "true"}
+        />
       </div>
       <GraphTable
         headers={[...graphDataTableHeader]}

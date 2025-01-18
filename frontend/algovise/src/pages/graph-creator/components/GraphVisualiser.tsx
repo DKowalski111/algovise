@@ -15,9 +15,11 @@ interface GraphEdge {
 interface GraphVisualizerProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  weighted: boolean;
+  directed: boolean;
 }
 
-const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
+const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighted, directed }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -31,8 +33,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
 
     svg.selectAll("*").remove();
 
-    // Define arrow marker if you have a directed graph:
-    // (Optional; remove if not needed)
     const defs = svg.append("defs");
     defs
       .append("marker")
@@ -125,15 +125,17 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
 
-      edgeLabelElements
-        .attr("x", (d: any, i: number) => {
-          const midX = (d.source.x + d.target.x) / 2;
-          return midX + i * 10;
-        })
-        .attr("y", (d: any) => {
-          const midY = (d.source.y + d.target.y) / 2;
-          return midY;
-        });
+      if (weighted) {
+        edgeLabelElements
+          .attr("x", (d: any, i: number) => {
+            const midX = (d.source.x + d.target.x) / 2;
+            return midX + i * 10;
+          })
+          .attr("y", (d: any) => {
+            const midY = (d.source.y + d.target.y) / 2;
+            return midY;
+          });
+      }
 
       nodeElements
         .attr("cx", (d: any) => Math.min(Math.max(d.x, 10), width - 15))
@@ -143,7 +145,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges }) => {
         .attr("x", (d: any) => d.x)
         .attr("y", (d: any) => d.y);
     });
-  }, [nodes, edges]);
+  }, [nodes, edges, weighted, directed]);
 
   return <svg ref={svgRef} />;
 };
