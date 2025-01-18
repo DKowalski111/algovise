@@ -2,10 +2,38 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import GraphVisualizer from '../graph-creator/components/GraphVisualiser';
 
-
+// You can rename this component to "BFSAlgorithm" or "BFS" as you wish
 const BFS: React.FC = () => {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
+  const [queue, setQueue] = useState<{ id: any; path: any[] }[]>([]);
+  const [visited, setVisited] = useState<Set<any>>(new Set());
+  const [adjacencyList, setAdjacencyList] = useState<Map<any, { id: any }[]>>(new Map());
+  const [initialized, setInitialized] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+
+  // BFS steps (feel free to adjust or expand these descriptions)
+  const steps = [
+    "",
+    "Step 1: Initialize BFS.\n" +
+    "• Build an adjacency list from the edges.\n" +
+    "• Create a queue and visited set.\n" +
+    "• Enqueue the source node with path = [source], mark source visited.\n",
+
+    "Step 2: Dequeue the first node from the queue.\n" +
+    "• If it's the destination, we found the shortest path.\n" +
+    "• Otherwise, continue.\n",
+
+    "Step 3: For each unvisited neighbor of current:\n" +
+    "• Enqueue neighbor with updated path.\n" +
+    "• Mark neighbor visited.\n",
+
+    "Step 4: If queue becomes empty, no path exists.\n" +
+    "• Otherwise, algorithm ends when destination is found.\n"
+  ];
 
   const location = useLocation();
   const nodes = location.state?.nodes || [];
@@ -14,6 +42,9 @@ const BFS: React.FC = () => {
   const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
+  // --------------------
+  // Input Handlers
+  // --------------------
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
   };
@@ -22,104 +53,331 @@ const BFS: React.FC = () => {
     setDestination(e.target.value);
   };
 
+  // -------------------------
+  // POPUP HELPER
+  // -------------------------
+  function showPopup(message: string) {
+    setPopupMessage(message);
+    setIsPopupVisible(true);
+  }
+
+  // -------------------------
+  // UTILITY: Build adjacency list
+  // -------------------------
+  function buildAdjacencyList() {
+    const adjList = new Map();
+    edges.forEach((edge: any) => {
+      const { id: src } = edge.source;
+      const { id: tgt } = edge.target;
+
+      if (!adjList.has(src)) adjList.set(src, []);
+      adjList.get(src).push({ id: tgt });
+
+      // If undirected, also add reverse edge
+      if (!directed) {
+        if (!adjList.has(tgt)) adjList.set(tgt, []);
+        adjList.get(tgt).push({ id: src });
+      }
+    });
+    return adjList;
+  }
+
+  // ---------------------------
+  // 1) "Perform Algorithm" BFS
+  // ---------------------------
   const handleAlgorithmClick = () => {
     if (!source || !destination) {
-      alert("Please provide both source and destination.");
+      showPopup("Please provide both source and destination.");
       return;
     }
 
-    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
-    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
-
+    // Validate source & destination
+    const sourceNode = nodes.find((n: { label: string }) => n.label === source);
+    const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
     if (!sourceNode || !destinationNode) {
-      alert("Invalid source or destination.");
+      showPopup("Invalid source or destination.");
       return;
     }
 
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    const adjacencyList: Map<number, { id: number; weight: number }[]> = new Map();
-    edges.forEach((edge: { source: number; target: number; weight: any; }) => {
-      if (!adjacencyList.has(edge.source)) {
-        adjacencyList.set(edge.source, []);
-      }
-      adjacencyList.get(edge.source)!.push({ id: edge.target, weight: edge.weight });
+    // Build adjacency list
+    const adjList = buildAdjacencyList();
 
-      if (!directed) {
-        if (!adjacencyList.has(edge.target)) {
-          adjacencyList.set(edge.target, []);
-        }
-        adjacencyList.get(edge.target)!.push({ id: edge.source, weight: edge.weight });
-      }
-    });
+    // BFS
+    const visitedSet = new Set<any>();
+    const queueArr = [{ id: sourceId, path: [sourceId] }];
+    visitedSet.add(sourceId);
 
-    // BFS Implementation
-    const queue: { id: number; path: number[] }[] = [{ id: sourceId, path: [sourceId] }];
-    const visited = new Set<number>();
+    while (queueArr.length > 0) {
+      const { id: currentId, path } = queueArr.shift()!;
 
-    while (queue.length > 0) {
-      const { id, path } = queue.shift()!;
-      if (id === destinationId) {
-        const pathLabels = path.map((nodeId) => nodes.find((node: { id: number; }) => node.id === nodeId)?.label);
-        alert(`Path found: ${pathLabels.join(" -> ")}`);
+      // If we've reached the destination => done
+      if (currentId === destinationId) {
+        const pathLabels = path.map((nid) =>
+          nodes.find((node: { id: any }) => node.id === nid)?.label
+        );
+        showPopup(`Path found: ${pathLabels.join(" -> ")}`);
         return;
       }
 
-      if (!visited.has(id)) {
-        visited.add(id);
-
-        const neighbors = adjacencyList.get(id) || [];
-        neighbors.forEach((neighbor) => {
-          if (!visited.has(neighbor.id)) {
-            queue.push({ id: neighbor.id, path: [...path, neighbor.id] });
-          }
-        });
+      // Otherwise, enqueue unvisited neighbors
+      const neighbors = adjList.get(currentId) || [];
+      for (const neighbor of neighbors) {
+        if (!visitedSet.has(neighbor.id)) {
+          visitedSet.add(neighbor.id);
+          queueArr.push({ id: neighbor.id, path: [...path, neighbor.id] });
+        }
       }
     }
 
-    alert("No path exists.");
+    // If the queue empties, no path
+    showPopup("No path exists.");
   };
 
+  // --------------------------
+  // 2) STEP-BY-STEP BFS
+  // --------------------------
+  const initializeAlgorithm = () => {
+    if (!source || !destination) {
+      showPopup("Please provide both source and destination.");
+      return;
+    }
 
+    const sourceNode = nodes.find((n: { label: string }) => n.label === source);
+    const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
+    if (!sourceNode || !destinationNode) {
+      showPopup("Invalid source or destination.");
+      return;
+    }
+
+    // build adjacency list
+    const adjList = buildAdjacencyList();
+
+    // set initial state
+    const sourceId = sourceNode.id;
+    const visitedSet = new Set<any>();
+    visitedSet.add(sourceId);
+
+    setAdjacencyList(adjList);
+    setQueue([{ id: sourceId, path: [sourceId] }]);
+    setVisited(visitedSet);
+    setInitialized(true);
+    setFinished(false);
+    setCurrentStepIndex(1); // Step 1: Initialize BFS
+  };
+
+  const nextStep = () => {
+    if (!initialized) {
+      initializeAlgorithm();
+      return;
+    }
+
+    if (finished) {
+      showPopup("Algorithm already finished. Reset to run again.");
+      return;
+    }
+
+    // If queue is empty => no path
+    if (queue.length === 0) {
+      setCurrentStepIndex(4); // Step 4: "No path found"
+      showPopup("No path exists.");
+      setFinished(true);
+      return;
+    }
+
+    // Dequeue the first node
+    const newQueue = [...queue];
+    const front = newQueue.shift();
+    if (!front) {
+      setCurrentStepIndex(4);
+      showPopup("No path exists.");
+      setFinished(true);
+      return;
+    }
+    setCurrentStepIndex(2); // Step 2: "Dequeue"
+
+    const { id: currentId, path } = front;
+    const destinationId = nodes.find((n: { label: string }) => n.label === destination)?.id;
+
+    // Check if it's the destination
+    if (currentId === destinationId) {
+      setFinished(true);
+      setCurrentStepIndex(4); // Show final step: "Algorithm ended"
+      const pathLabels = path.map((nid) =>
+        nodes.find((node: { id: any }) => node.id === nid)?.label
+      );
+      showPopup(`Path found: ${pathLabels.join(" -> ")}`);
+      return;
+    }
+
+    // If not the destination, enqueue unvisited neighbors
+    setCurrentStepIndex(3); // Step 3: "For each unvisited neighbor..."
+
+    const neighbors = adjacencyList.get(currentId) || [];
+    const newVisited = new Set(visited);
+
+    for (const neighbor of neighbors) {
+      if (!newVisited.has(neighbor.id)) {
+        newVisited.add(neighbor.id);
+        newQueue.push({ id: neighbor.id, path: [...path, neighbor.id] });
+      }
+    }
+
+    // update states
+    setQueue(newQueue);
+    setVisited(newVisited);
+  };
+
+  // ------------------------
+  // RESET
+  // ------------------------
+  const resetAlgorithm = () => {
+    setQueue([]);
+    setVisited(new Set());
+    setAdjacencyList(new Map());
+    setInitialized(false);
+    setFinished(false);
+    setCurrentStepIndex(0);
+  };
+
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
-    <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
+    <div
+      className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
+                 justify-content-center align-items-center align-content-center flex-wrap
+                 justify-content-xxl-center align-items-xxl-center"
+    >
+      {/* Popup Overlay */}
+      <div
+        className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
+        onClick={() => setIsPopupVisible(false)}
+      />
+      {/* Popup Modal */}
+      {isPopupVisible && (
+        <div className="popup">
+          <p>{popupMessage}</p>
+          <button className="btn btn-primary" onClick={() => setIsPopupVisible(false)}>
+            OK
+          </button>
+        </div>
+      )}
+
+      {/* Graph Info Table */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
             <tr>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Name
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Directed
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Weighted
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
-                MyGraph
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
+                {graphName}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {directed ? "Yes" : "No"}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {weighted ? "Yes" : "No"}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4" style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }} >
+
+      {/* Graph Visualizer */}
+      <div
+        className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
+                   align-items-center align-content-start flex-wrap justify-content-xxl-center
+                   align-items-xxl-center mx-3 my-5 py-4 px-4"
+        style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }}
+      >
         <GraphVisualizer nodes={nodes} edges={edges} weighted={weighted} directed={directed} />
       </div>
+
       <h1 className="text-center" style={{ color: 'var(--bs-light)' }}>
-        Breadth-first search - find shortest path
+        Breadth-First Search Algorithm - Find Shortest Path
       </h1>
+
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -140,40 +398,34 @@ const BFS: React.FC = () => {
           />
         </div>
       </div>
-      <button className="btn btn-primary" type="button" onClick={handleAlgorithmClick}>
-        Perform Algorithm
-      </button>
+
+      <div className="d-flex flex-row justify-content-center align-items-center">
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
+          Perform Algorithm
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>
+          Go Step-By-Step
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>
+          Reset
+        </button>
+      </div>
+
+      {/* Step Descriptions */}
       <div className="mt-4">
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          1. Initialize a queue and enqueue the start node.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          2. Mark the start node as visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          3. While the queue is not empty:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          4. Dequeue the first node from the queue.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          5. Process the dequeued node (e.g., check if it’s the target node or perform other actions).
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          6. For each unvisited neighbor of the dequeued node:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Mark the neighbor as visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Enqueue the neighbor.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          7. Repeat steps 3–6 until the queue is empty or the target node is found.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          8. If the queue becomes empty and the target node has not been found, return "No path exists."
-        </p>
+        {steps.map((step, index) => (
+          <p
+            key={index}
+            className="text-center"
+            style={{
+              color: index === currentStepIndex ? "var(--bs-primary)" : "var(--bs-light)",
+              fontWeight: index === currentStepIndex ? "bold" : "normal",
+              whiteSpace: "pre-line"
+            }}
+          >
+            {step}
+          </p>
+        ))}
       </div>
     </div>
   );

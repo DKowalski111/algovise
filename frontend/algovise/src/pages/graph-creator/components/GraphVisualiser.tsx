@@ -62,7 +62,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
       .attr("class", "link")
       .attr("stroke", "#999")
       .attr("stroke-width", 2)
-      .attr("marker-end", "url(#arrow)"); // optional, for directed edges
+      .attr("marker-end", directed ? "url(#arrow)" : null);
 
     // **Add text for the edge weights**
     const edgeLabelElements = svg

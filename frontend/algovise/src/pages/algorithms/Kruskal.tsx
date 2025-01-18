@@ -2,16 +2,53 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import GraphVisualizer from '../graph-creator/components/GraphVisualiser';
 
+type Edge = {
+  sourceId: any;
+  targetId: any;
+  weight: number;
+};
+
 const Kruskal: React.FC = () => {
+  const [edgesList, setEdgesList] = useState<Edge[]>([]);
+  const [parent, setParent] = useState<Map<any, any>>(new Map());
+  const [rank, setRank] = useState<Map<any, number>>(new Map());
+  const [mstEdges, setMstEdges] = useState<Edge[]>([]);
+  const [initialized, setInitialized] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [currentEdgeIndex, setCurrentEdgeIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+
+  // Kruskal steps (feel free to adjust text as needed)
+  const steps = [
+    "",
+    "Step 1: Initialize Kruskal.\n" +
+    "• Build a list of all edges.\n" +
+    "• Sort them by weight.\n" +
+    "• Initialize Union-Find (parent, rank) for each node.\n",
+
+    "Step 2: Pick the smallest edge (by weight).\n" +
+    "• If the edge’s endpoints are in different sets, union them and add edge to MST.\n" +
+    "• Otherwise, skip (it would form a cycle).\n",
+
+    "Step 3: Repeat picking edges.\n" +
+    "• Keep uniting sets and adding edges until you have V-1 edges or run out.\n",
+
+    "Step 4: MST complete or no more edges.\n" +
+    "• If MST has V-1 edges, you have a spanning tree.\n" +
+    "• Otherwise, the graph is not fully connected.\n"
+  ];
 
   const location = useLocation();
   const nodes = location.state?.nodes || [];
   const edges = location.state?.edges || [];
   const weighted = location.state?.weighted || false;
-  const directed = location.state?.directed || false;
+  const directed = location.state?.directed || false; // Kruskal is for undirected graphs typically.
   const graphName = location.state?.graphName || "Unnamed Graph";
+
 
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
@@ -21,149 +58,349 @@ const Kruskal: React.FC = () => {
     setDestination(e.target.value);
   };
 
+  // -------------------------
+  // POPUP HELPER
+  // -------------------------
+  function showPopup(message: string) {
+    setPopupMessage(message);
+    setIsPopupVisible(true);
+  }
+
+  // -------------------------
+  // Utility: Build Edge List
+  // -------------------------
+  function buildEdgeList() {
+    const list: Edge[] = [];
+    edges.forEach((edgeObj: any) => {
+      const { id: src } = edgeObj.source;
+      const { id: tgt } = edgeObj.target;
+      const w = edgeObj.weight ?? 1;
+
+      // For Kruskal, we treat as undirected, so just store one direction
+      // (If the graph is directed in the data, Kruskal might not fully apply, 
+      //  but we'll assume you're forcing it to be undirected or ignoring direction.)
+      list.push({ sourceId: src, targetId: tgt, weight: w });
+    });
+
+    // Sort by weight
+    list.sort((a, b) => a.weight - b.weight);
+    return list;
+  }
+
+  // -------------------------
+  // Union-Find (Disjoint Set)
+  // -------------------------
+  function makeSet(nodesArray: any[]) {
+    const pMap = new Map<any, any>();
+    const rMap = new Map<any, number>();
+
+    for (let n of nodesArray) {
+      pMap.set(n.id, n.id); // parent of itself
+      rMap.set(n.id, 0);    // rank = 0
+    }
+    return { pMap, rMap };
+  }
+
+  function findSet(pMap: Map<any, any>, x: any): any {
+    // Path compression
+    if (pMap.get(x) !== x) {
+      pMap.set(x, findSet(pMap, pMap.get(x)));
+    }
+    return pMap.get(x);
+  }
+
+  function unionSets(
+    pMap: Map<any, any>,
+    rMap: Map<any, number>,
+    a: any,
+    b: any
+  ) {
+    const rootA = findSet(pMap, a);
+    const rootB = findSet(pMap, b);
+
+    if (rootA !== rootB) {
+      // union by rank
+      const rankA = rMap.get(rootA) ?? 0;
+      const rankB = rMap.get(rootB) ?? 0;
+
+      if (rankA < rankB) {
+        pMap.set(rootA, rootB);
+      } else if (rankA > rankB) {
+        pMap.set(rootB, rootA);
+      } else {
+        pMap.set(rootB, rootA);
+        rMap.set(rootA, rankA + 1);
+      }
+    }
+  }
+
+  // -------------------------
+  // 1) Full Run Kruskal
+  // -------------------------
   const handleAlgorithmClick = () => {
-    console.log("Source:", source);
-    console.log("Destination:", destination);
-
-    if (!source || !destination) {
-      alert("Please provide both source and destination.");
+    if (directed) {
+      showPopup("Kruskal's algorithm requires an undirected graph. You have a directed graph selected.");
       return;
     }
 
-    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
-    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
+    const edgeArray = buildEdgeList();
+    const { pMap, rMap } = makeSet(nodes);
 
-    console.log("Source Node:", sourceNode);
-    console.log("Destination Node:", destinationNode);
+    const mst: Edge[] = [];
+    for (let edge of edgeArray) {
+      const { sourceId, targetId, weight } = edge;
 
-    if (!sourceNode || !destinationNode) {
-      alert("Invalid source or destination.");
-      return;
-    }
+      const rootS = findSet(pMap, sourceId);
+      const rootT = findSet(pMap, targetId);
 
-    const sourceId = sourceNode.id;
-    const destinationId = destinationNode.id;
-
-    console.log("Source ID:", sourceId);
-    console.log("Destination ID:", destinationId);
-
-    const edgesList: { sourceId: string, targetId: string, weight: number }[] = [];
-    edges.forEach((edge: { source: { id: string; }; target: { id: string; }; weight: number; }) => {
-      const sourceId = edge.source.id;
-      const targetId = edge.target.id;
-      const weight = edge.weight;
-      edgesList.push({ sourceId, targetId, weight });
-      if (!directed) {
-        edgesList.push({ sourceId: targetId, targetId: sourceId, weight });
-      }
-    });
-
-    // Sort edges by weight
-    edgesList.sort((a, b) => a.weight - b.weight);
-
-    console.log("Sorted Edges:", edgesList);
-
-    // Union-Find (Disjoint Set) data structure
-    const parent: { [key: string]: string } = {};
-    const rank: { [key: string]: number } = {};
-
-    // Initialize Union-Find sets
-    nodes.forEach((node: { id: string }) => {
-      parent[node.id] = node.id;
-      rank[node.id] = 0;
-    });
-
-    // Find with path compression
-    const find = (node: string): string => {
-      if (parent[node] !== node) {
-        parent[node] = find(parent[node]);
-      }
-      return parent[node];
-    };
-
-    // Union by rank
-    const union = (node1: string, node2: string): boolean => {
-      const root1 = find(node1);
-      const root2 = find(node2);
-      if (root1 !== root2) {
-        // Union by rank
-        if (rank[root1] > rank[root2]) {
-          parent[root2] = root1;
-        } else if (rank[root1] < rank[root2]) {
-          parent[root1] = root2;
-        } else {
-          parent[root2] = root1;
-          rank[root1]++;
-        }
-        return true;
-      }
-      return false;
-    };
-
-    const mst: { sourceId: string, targetId: string, weight: number }[] = [];
-
-    // Kruskal's Algorithm: Process edges in sorted order
-    edgesList.forEach((edge) => {
-      if (union(edge.sourceId, edge.targetId)) {
+      if (rootS !== rootT) {
+        unionSets(pMap, rMap, rootS, rootT);
         mst.push(edge);
       }
-    });
 
-    console.log("Minimum Spanning Tree (MST):", mst);
+      // If we've added V-1 edges, MST is complete (assuming connected)
+      if (mst.length === nodes.length - 1) break;
+    }
 
-    // Display the result of the MST (if needed)
-    if (mst.length > 0) {
-      const mstLabels = mst.map((edge) => {
-        const sourceLabel = nodes.find((node: { id: string }) => node.id === edge.sourceId)?.label;
-        const targetLabel = nodes.find((node: { id: string }) => node.id === edge.targetId)?.label;
-        return `${sourceLabel} - ${targetLabel} (Weight: ${edge.weight})`;
-      });
-
-      alert(`Minimum Spanning Tree:\n${mstLabels.join("\n")}`);
+    if (mst.length === nodes.length - 1) {
+      // we have an MST
+      showPopup(`MST found with ${mst.length} edges.`);
     } else {
-      alert("No edges in MST.");
+      showPopup(
+        `MST has ${mst.length} edges. The graph might be disconnected or we didn't reach V-1 edges.`
+      );
     }
   };
 
+  // -------------------------
+  // 2) Step-by-Step
+  // -------------------------
+  const initializeAlgorithm = () => {
+    if (directed) {
+      showPopup("Kruskal's algorithm typically requires an undirected graph.");
+      return;
+    }
 
+    // 1) Build edge list & union-find
+    const eList = buildEdgeList();
+    const { pMap, rMap } = makeSet(nodes);
+
+    setEdgesList(eList);
+    setParent(pMap);
+    setRank(rMap);
+    setMstEdges([]);
+    setInitialized(true);
+    setFinished(false);
+    setCurrentEdgeIndex(0);
+    setCurrentStepIndex(1); // Step 1: Initialize
+  };
+
+  const nextStep = () => {
+    if (!initialized) {
+      initializeAlgorithm();
+      return;
+    }
+    if (finished) {
+      showPopup("Algorithm finished. Reset to run again.");
+      return;
+    }
+
+    // If we've used all edges
+    if (currentEdgeIndex >= edgesList.length) {
+      setFinished(true);
+      setCurrentStepIndex(4); // Step 4: "MST complete or no more edges"
+      showPopup(`No more edges to process. MST size = ${mstEdges.length}`);
+      return;
+    }
+
+    // pick the next smallest edge
+    const edge = edgesList[currentEdgeIndex];
+    setCurrentStepIndex(2); // Step 2: "Pick smallest edge"
+
+    const newParent = new Map(parent);
+    const newRank = new Map(rank);
+    const newMst = [...mstEdges];
+
+    // check if it forms a cycle
+    const rootA = findSet(newParent, edge.sourceId);
+    const rootB = findSet(newParent, edge.targetId);
+
+    if (rootA !== rootB) {
+      // union them
+      unionSets(newParent, newRank, rootA, rootB);
+      newMst.push(edge);
+      setCurrentStepIndex(3); // Step 3: "Repeat picking edges"
+    } else {
+      // This edge is skipped (would form a cycle)
+      // We'll keep the step index at 2 or 3. It's a bit ambiguous,
+      // but let's stick with 2 to indicate we just tried picking an edge.
+    }
+
+    // Update states
+    setParent(newParent);
+    setRank(newRank);
+    setMstEdges(newMst);
+    setCurrentEdgeIndex(currentEdgeIndex + 1);
+
+    // Check if MST is complete (V-1 edges)
+    if (newMst.length === nodes.length - 1) {
+      setFinished(true);
+      setCurrentStepIndex(4);
+      showPopup(`MST complete with ${newMst.length} edges.`);
+    }
+  };
+
+  // -------------------------
+  // RESET
+  // -------------------------
+  const resetAlgorithm = () => {
+    setEdgesList([]);
+    setParent(new Map());
+    setRank(new Map());
+    setMstEdges([]);
+    setInitialized(false);
+    setFinished(false);
+    setCurrentEdgeIndex(0);
+    setCurrentStepIndex(0);
+  };
+
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
-    <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
+    <div
+      className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
+                 justify-content-center align-items-center align-content-center flex-wrap
+                 justify-content-xxl-center align-items-xxl-center"
+    >
+      {/* Popup Overlay */}
+      <div
+        className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
+        onClick={() => setIsPopupVisible(false)}
+      />
+      {/* Popup Modal */}
+      {isPopupVisible && (
+        <div className="popup">
+          <p>{popupMessage}</p>
+          <button className="btn btn-primary" onClick={() => setIsPopupVisible(false)}>
+            OK
+          </button>
+        </div>
+      )}
+
+      {/* Table with Graph Info */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
             <tr>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Name
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Directed
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Weighted
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
-                MyGraph
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
+                {graphName}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {directed ? "Yes" : "No"}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {weighted ? "Yes" : "No"}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4" style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }} >
+
+      {/* Graph Visualizer */}
+      <div
+        className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
+                   align-items-center align-content-start flex-wrap justify-content-xxl-center
+                   align-items-xxl-center mx-3 my-5 py-4 px-4"
+        style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }}
+      >
         <GraphVisualizer nodes={nodes} edges={edges} weighted={weighted} directed={directed} />
       </div>
+
       <h1 className="text-center" style={{ color: 'var(--bs-light)' }}>
-        Kruskal Algorithm - Minimum Spanning Tree
+        Kruskal's Algorithm - Minimum Spanning Tree
       </h1>
+
+      {/* Optional: If you want to keep the Source/Dest inputs for a consistent UI, otherwise you can remove them */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -184,37 +421,47 @@ const Kruskal: React.FC = () => {
           />
         </div>
       </div>
-      <button className="btn btn-primary" type="button" onClick={handleAlgorithmClick}>
-        Perform Algorithm
-      </button>
+
+      {/* Buttons */}
+      <div className="d-flex flex-row justify-content-center align-items-center">
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
+          Perform Algorithm
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>
+          Go Step-By-Step
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>
+          Reset
+        </button>
+      </div>
+
+      {/* Step Descriptions */}
       <div className="mt-4">
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          1. Initialize a priority queue and add the starting node with a key value of 0.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          2. Mark all nodes as unvisited, except the starting node, which is visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          3. While the priority queue is not empty:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          4. Extract the node with the smallest key value from the priority queue. This is the current node.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          5. For each unvisited neighbor of the current node:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - If the neighbor's key value is greater than the edge weight between the current node and the neighbor, update the neighbor’s key value and set the current node as its parent.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Add the neighbor to the priority queue with the updated key value.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          6. Repeat steps 4 and 5 until all nodes are visited.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          7. The result is a Minimum Spanning Tree (MST) formed by the edges connecting each node to its parent.
-        </p>
+        {steps.map((step, index) => (
+          <p
+            key={index}
+            className="text-center"
+            style={{
+              color: index === currentStepIndex ? "var(--bs-primary)" : "var(--bs-light)",
+              fontWeight: index === currentStepIndex ? "bold" : "normal",
+              whiteSpace: "pre-line"
+            }}
+          >
+            {step}
+          </p>
+        ))}
+      </div>
+
+      {/* Optional: Display MST edges so far (step-by-step) */}
+      <div style={{ color: 'var(--bs-light)', marginTop: '1rem' }}>
+        <h5>MST Edges Chosen So Far:</h5>
+        <ul>
+          {mstEdges.map((e, i) => (
+            <li key={i}>
+              {e.sourceId} -- {e.targetId} (weight: {e.weight})
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

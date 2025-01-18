@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 @RestController
 @AllArgsConstructor
@@ -101,6 +102,22 @@ public class GraphController {
                 }
                 graphService.removeEdges(idsOfEdgesToBeRemoved);
                 graphService.removeNode(nodeId);
+            }
+        }
+
+        for(Edge edge : graph.getEdges())
+        {
+            boolean edgeExists = false;
+            for(EdgeDto edgeDto : edges)
+            {
+                if (Objects.equals(edgeDto.getId(), edge.getId())) {
+                    edgeExists = true;
+                    break;
+                }
+            }
+            if(!edgeExists)
+            {
+                graphService.removeEdges(Set.of(edge.getId()));
             }
         }
     }

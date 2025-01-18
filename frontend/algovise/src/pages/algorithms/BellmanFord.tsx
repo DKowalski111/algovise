@@ -5,6 +5,39 @@ import GraphVisualizer from '../graph-creator/components/GraphVisualiser';
 const BellmanFord: React.FC = () => {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
+  const [distances, setDistances] = useState<Map<any, number>>(new Map());
+  const [predecessors, setPredecessors] = useState<Map<any, any>>(new Map());
+  const [initialized, setInitialized] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentIteration, setCurrentIteration] = useState(0);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [edgesList, setEdgesList] = useState<
+    { sourceId: any; targetId: any; weight: number }[]
+  >([]);
+
+  // Bellman-Ford typically goes:
+  // 1) Initialize distances (source = 0, others = ∞).
+  // 2) Relax all edges up to (V - 1) times.
+  // 3) Check for negative-weight cycles by trying one more relaxation.
+
+  const steps = [
+    "",
+    "Step 1: Initialize Bellman-Ford.\n" +
+    "• distance[source] = 0, distance[others] = ∞.\n" +
+    "• predecessors = none.\n",
+
+    "Step 2: Relax all edges.\n" +
+    "• For each edge (u -> v), if distance[u] + weight < distance[v], update distance[v].\n" +
+    "• Repeat for V-1 iterations in total.\n",
+
+    "Step 3: Check for negative cycles.\n" +
+    "• Attempt one more relaxation. If any distance improves, a negative cycle exists.\n",
+
+    "Step 4: Algorithm ended (path found or no path possible).\n" +
+    "• If the algorithm ends with no negative cycle, use predecessors to reconstruct path.\n"
+  ];
 
   const location = useLocation();
   const nodes = location.state?.nodes || [];
@@ -13,6 +46,9 @@ const BellmanFord: React.FC = () => {
   const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
+  // --------------------
+  // Input Handlers
+  // --------------------
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
   };
@@ -21,152 +57,396 @@ const BellmanFord: React.FC = () => {
     setDestination(e.target.value);
   };
 
+  // -------------------------
+  // POPUP HELPER
+  // -------------------------
+  function showPopup(message: string) {
+    setPopupMessage(message);
+    setIsPopupVisible(true);
+  }
+
+  // -------------------------
+  // Helper: Build an edge list
+  // -------------------------
+  function buildEdgeList() {
+    // We'll flatten edges into an array: { sourceId, targetId, weight }
+    // If undirected, we'll include both directions
+    const edgeArray: { sourceId: any; targetId: any; weight: number }[] = [];
+    edges.forEach((edgeObj: any) => {
+      const { id: src } = edgeObj.source;
+      const { id: tgt } = edgeObj.target;
+      const w = edgeObj.weight ?? 1; // default weight = 1 if not provided
+      edgeArray.push({ sourceId: src, targetId: tgt, weight: w });
+      if (!directed) {
+        edgeArray.push({ sourceId: tgt, targetId: src, weight: w });
+      }
+    });
+    return edgeArray;
+  }
+
+  // -------------------------
+  // UTILITY: Reconstruct path
+  // -------------------------
+  // If we want to reconstruct the path from `source` to `destination` after the algorithm,
+  // we can follow `predecessors` back from destination to source.
+  function getPath(predecessorMap: Map<any, any>, src: any, dest: any): any[] {
+    const path = [];
+    let current = dest;
+    while (current !== undefined && current !== src) {
+      path.push(current);
+      current = predecessorMap.get(current);
+    }
+    if (current === src) {
+      path.push(src);
+      path.reverse();
+      return path;
+    }
+    return []; // no path found
+  }
+
+  // -------------------------
+  // 1) Full Run of Bellman-Ford
+  // -------------------------
   const handleAlgorithmClick = () => {
-    console.log("Source:", source);
-    console.log("Destination:", destination);
-
     if (!source || !destination) {
-      alert("Please provide both source and destination.");
+      showPopup("Please provide both source and destination.");
       return;
     }
 
-    const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
-    const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
-
-    console.log("Source Node:", sourceNode);
-    console.log("Destination Node:", destinationNode);
-
+    // Validate source & destination
+    const sourceNode = nodes.find((n: { label: string }) => n.label === source);
+    const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
     if (!sourceNode || !destinationNode) {
-      alert("Invalid source or destination.");
+      showPopup("Invalid source or destination.");
       return;
     }
-
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    console.log("Source ID:", sourceId);
-    console.log("Destination ID:", destinationId);
+    // Create distances map (node.id -> number)
+    const distMap = new Map();
+    // Create predecessor map (node.id -> node.id)
+    const predMap = new Map();
 
-    const distances = new Map();
-    const predecessors = new Map();
-
-    nodes.forEach((node: { id: any; }) => {
-      distances.set(node.id, Infinity);
-      predecessors.set(node.id, null);
+    // Initialize
+    nodes.forEach((node: any) => {
+      distMap.set(node.id, Infinity);
+      predMap.set(node.id, undefined);
     });
+    distMap.set(sourceId, 0);
 
-    distances.set(sourceId, 0);
+    // Build a flat edge list
+    const edgeArray = buildEdgeList();
 
-    console.log("Initial Distances:", Array.from(distances.entries()));
-
+    // Bellman-Ford:
+    // 1) Relax edges V-1 times
     for (let i = 0; i < nodes.length - 1; i++) {
-      let hasUpdated = false;
-
-      edges.forEach((edge: { source: { id: any; }; target: { id: any; }; weight: any; }) => {
-        const source = edge.source.id;
-        const target = edge.target.id;
-        const weight = edge.weight;
-
-        if (distances.get(source) + weight < distances.get(target)) {
-          distances.set(target, distances.get(source) + weight);
-          predecessors.set(target, source);
-          hasUpdated = true;
+      let updated = false;
+      for (let edge of edgeArray) {
+        const { sourceId: u, targetId: v, weight } = edge;
+        const newDist = distMap.get(u) + weight;
+        if (distMap.get(u) !== Infinity && newDist < distMap.get(v)) {
+          distMap.set(v, newDist);
+          predMap.set(v, u);
+          updated = true;
         }
+      }
+      // If no update in an iteration => early stop
+      if (!updated) break;
+    }
 
-        // For undirected graphs, also relax the reverse edge
-        if (!directed) {
-          if (distances.get(target) + weight < distances.get(source)) {
-            distances.set(source, distances.get(target) + weight);
-            predecessors.set(source, target);
-            hasUpdated = true;
-          }
-        }
-      });
-
-      console.log(`Iteration ${i + 1} Distances:`, Array.from(distances.entries()));
-
-      if (!hasUpdated) {
-        break;
+    // 2) Check for negative cycles
+    for (let edge of edgeArray) {
+      const { sourceId: u, targetId: v, weight } = edge;
+      if (distMap.get(u) !== Infinity && distMap.get(u) + weight < distMap.get(v)) {
+        showPopup("Negative cycle detected, no shortest path exists.");
+        return;
       }
     }
 
-    // Check for negative weight cycles
-    let hasNegativeCycle = false;
-    edges.forEach((edge: { source: { id: any; }; target: { id: any; }; weight: any; }) => {
-      const source = edge.source.id;
-      const target = edge.target.id;
-      const weight = edge.weight;
-
-      if (distances.get(source) + weight < distances.get(target)) {
-        hasNegativeCycle = true;
-      }
-    });
-
-    if (hasNegativeCycle) {
-      alert("Graph contains a negative weight cycle.");
-      return;
+    // If we reach here, no negative cycles. We can reconstruct path
+    const path = getPath(predMap, sourceId, destinationId);
+    if (path.length > 0) {
+      // Convert path of ids to labels
+      const pathLabels = path.map((id) =>
+        nodes.find((node: { id: any }) => node.id === id)?.label
+      );
+      const distanceVal = distMap.get(destinationId);
+      showPopup(`Path found: ${pathLabels.join(" -> ")}, distance = ${distanceVal}`);
+    } else {
+      showPopup("No path exists from source to destination.");
     }
-
-    console.log("Final Distances:", Array.from(distances.entries()));
-    console.log("Predecessors:", Array.from(predecessors.entries()));
-
-    if (distances.get(destinationId) === Infinity) {
-      alert("No path exists.");
-      return;
-    }
-
-    // Construct the path from source to destination
-    const path = [];
-    let currentNode = destinationId;
-
-    while (currentNode !== null) {
-      path.unshift(currentNode);
-      currentNode = predecessors.get(currentNode);
-    }
-
-    const pathLabels = path.map((nodeId) => nodes.find((node: { id: any; }) => node.id === nodeId)?.label);
-    alert(`Shortest Path: ${pathLabels.join(" -> ")}, Distance: ${distances.get(destinationId)}`);
   };
 
+  // -------------------------
+  // 2) Step-by-Step
+  // -------------------------
+  const initializeAlgorithm = () => {
+    if (!source || !destination) {
+      showPopup("Please provide both source and destination.");
+      return;
+    }
 
+    const sourceNode = nodes.find((n: { label: string }) => n.label === source);
+    const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
+    if (!sourceNode || !destinationNode) {
+      showPopup("Invalid source or destination.");
+      return;
+    }
+
+    // Create distances
+    const distMap = new Map();
+    const predMap = new Map();
+    for (let node of nodes) {
+      distMap.set(node.id, Infinity);
+      predMap.set(node.id, undefined);
+    }
+    distMap.set(sourceNode.id, 0);
+
+    // Build edge list
+    const edgeArray = buildEdgeList();
+
+    setDistances(distMap);
+    setPredecessors(predMap);
+    setEdgesList(edgeArray);
+    setCurrentIteration(0);
+    setInitialized(true);
+    setFinished(false);
+    setCurrentStepIndex(1); // Step 1: Initialize
+  };
+
+  const nextStep = () => {
+    if (!initialized) {
+      initializeAlgorithm();
+      return;
+    }
+    if (finished) {
+      showPopup("Algorithm finished. Reset to run again.");
+      return;
+    }
+
+    // We typically relax edges up to V-1 times, then do a final check
+    const V = nodes.length;
+    let distMap = new Map(distances);
+    let predMap = new Map(predecessors);
+
+    // 0) If currentIteration < V-1 => we're in the "relax edges" phase
+    if (currentIteration < V - 1) {
+      setCurrentStepIndex(2); // "Relax all edges"
+      let updated = false;
+      for (let edge of edgesList) {
+        const { sourceId: u, targetId: v, weight } = edge;
+        const distU = distMap.get(u) ?? Infinity;
+        const distV = distMap.get(v) ?? Infinity;
+        if (distU !== Infinity && distU + weight < distV) {
+          distMap.set(v, distU + weight);
+          predMap.set(v, u);
+          updated = true;
+        }
+      }
+      setDistances(distMap);
+      setPredecessors(predMap);
+      setCurrentIteration(currentIteration + 1);
+
+      // if no update => we can skip to next phase (negative cycle check)
+      if (!updated) {
+        // jump directly to negative cycle check
+        setCurrentIteration(V - 1);
+      }
+    }
+    else if (currentIteration === V - 1) {
+      // Now do negative cycle check
+      setCurrentStepIndex(3); // "Check for negative cycles"
+
+      for (let edge of edgesList) {
+        const { sourceId: u, targetId: v, weight } = edge;
+        const distU = distMap.get(u) ?? Infinity;
+        const distV = distMap.get(v) ?? Infinity;
+        if (distU !== Infinity && distU + weight < distV) {
+          showPopup("Negative cycle detected. No shortest path solution.");
+          setFinished(true);
+          setCurrentIteration(currentIteration + 1);
+          setCurrentStepIndex(4);
+          return;
+        }
+      }
+      // no negative cycle => done
+      setFinished(true);
+      setCurrentIteration(currentIteration + 1);
+      setCurrentStepIndex(4); // "Algorithm ended"
+
+      // Optionally show path if user has a destination in mind
+      const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
+      if (destinationNode) {
+        const path = getPath(predMap, nodes.find((n: { label: string }) => n.label === source)?.id, destinationNode.id);
+        if (path.length > 0) {
+          const pathLabels = path.map((id) =>
+            nodes.find((node: { id: any }) => node.id === id)?.label
+          );
+          const distVal = distMap.get(destinationNode.id);
+          showPopup(`Path found: ${pathLabels.join(" -> ")}, distance = ${distVal}`);
+        } else {
+          showPopup("No path exists from source to destination.");
+        }
+      }
+    }
+    else {
+      // We've done all steps
+      showPopup("Algorithm is already finished.");
+      setCurrentStepIndex(4);
+    }
+  };
+
+  // -------------------------
+  // RESET
+  // -------------------------
+  const resetAlgorithm = () => {
+    setDistances(new Map());
+    setPredecessors(new Map());
+    setEdgesList([]);
+    setInitialized(false);
+    setFinished(false);
+    setCurrentIteration(0);
+    setCurrentStepIndex(0);
+  };
+
+  // -----------------------------------
+  // RENDER
+  // -----------------------------------
   return (
-    <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center">
+    <div
+      className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
+                 justify-content-center align-items-center align-content-center flex-wrap
+                 justify-content-xxl-center align-items-xxl-center"
+    >
+      {/* Popup Overlay */}
+      <div
+        className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
+        onClick={() => setIsPopupVisible(false)}
+      />
+      {/* Popup Modal */}
+      {isPopupVisible && (
+        <div className="popup">
+          <p>{popupMessage}</p>
+          <button className="btn btn-primary" onClick={() => setIsPopupVisible(false)}>
+            OK
+          </button>
+        </div>
+      )}
+
+      {/* Table with Graph Info */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
             <tr>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Name
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Directed
               </th>
-              <th className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <th
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 Weighted
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
-                MyGraph
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
+                {graphName}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {directed ? "Yes" : "No"}
               </td>
-              <td className="text-center px-4 py-4" style={{ background: 'var(--bs-body-color)', borderRadius: '3px', borderStyle: 'solid', borderColor: 'var(--bs-table-bg)', borderBottomWidth: '3px', borderBottomStyle: 'solid', color: 'var(--bs-table-bg)' }}>
+              <td
+                className="text-center px-4 py-4"
+                style={{
+                  background: 'var(--bs-body-color)',
+                  borderRadius: '3px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--bs-table-bg)',
+                  borderBottomWidth: '3px',
+                  borderBottomStyle: 'solid',
+                  color: 'var(--bs-table-bg)'
+                }}
+              >
                 {weighted ? "Yes" : "No"}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-start flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4" style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }} >
+
+      {/* Graph Visualizer */}
+      <div
+        className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
+                   align-items-center align-content-start flex-wrap justify-content-xxl-center
+                   align-items-xxl-center mx-3 my-5 py-4 px-4"
+        style={{ borderStyle: 'solid', borderColor: 'var(--bs-body-bg)', borderRadius: '1em', width: '40%' }}
+      >
         <GraphVisualizer nodes={nodes} edges={edges} weighted={weighted} directed={directed} />
       </div>
+
       <h1 className="text-center" style={{ color: 'var(--bs-light)' }}>
         Bellman-Ford Algorithm - Find Shortest Path
       </h1>
+
+      {/* Source / Destination Inputs */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -187,40 +467,35 @@ const BellmanFord: React.FC = () => {
           />
         </div>
       </div>
-      <button className="btn btn-primary" type="button" onClick={handleAlgorithmClick}>
-        Perform Algorithm
-      </button>
+
+      {/* Buttons */}
+      <div className="d-flex flex-row justify-content-center align-items-center">
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
+          Perform Algorithm
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={nextStep}>
+          Go Step-By-Step
+        </button>
+        <button className="btn btn-primary mx-4 my-3" type="button" onClick={resetAlgorithm}>
+          Reset
+        </button>
+      </div>
+
+      {/* Step Descriptions */}
       <div className="mt-4">
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          1. Initialize the distance to the source node as 0 and all other nodes as infinity.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          2. For each node, set the predecessor to null (indicating no path yet).
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          3. Repeat the following steps for a total of V-1 times, where V is the number of nodes:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          4. For each edge (u, v) with weight w:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - If the distance to node u plus the weight of the edge is less than the current distance to node v, update the distance to node v.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - Set the predecessor of node v to node u.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          5. After V-1 iterations, check for negative weight cycles:
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          - For each edge (u, v) with weight w, if the distance to node u plus the weight of the edge is still less than the current distance to node v, it indicates a negative weight cycle.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          6. If no negative weight cycles are found, return the shortest distance from the source to each node and their respective predecessors.
-        </p>
-        <p className="text-center" style={{ color: 'var(--bs-light)' }}>
-          7. If a negative weight cycle is detected, return an indication that a negative cycle exists.
-        </p>
+        {steps.map((step, index) => (
+          <p
+            key={index}
+            className="text-center"
+            style={{
+              color: index === currentStepIndex ? "var(--bs-primary)" : "var(--bs-light)",
+              fontWeight: index === currentStepIndex ? "bold" : "normal",
+              whiteSpace: "pre-line"
+            }}
+          >
+            {step}
+          </p>
+        ))}
       </div>
     </div>
   );
