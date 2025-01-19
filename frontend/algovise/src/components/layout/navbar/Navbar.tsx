@@ -6,26 +6,24 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
 
-  // Function to check if the token is valid
   const checkIfTokenValid = () => {
     checkToken().then((isValid) => {
-      setIsTokenValid(isValid); // Update state based on token validity
+      setIsTokenValid(isValid);
     }).catch(() => {
-      setIsTokenValid(false); // Set to false if token check fails
+      setIsTokenValid(false);
     });
 
   };
 
   useEffect(() => {
-    // Check token validity when component mounts
     checkIfTokenValid();
-  }, []); // Empty dependency array means this runs only once, like componentDidMount
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Remove token from storage
+    localStorage.removeItem('token');
     localStorage.removeItem('id');
-    setIsTokenValid(false); // Immediately update the UI
-    navigate('/login'); // Redirect to login page
+    setIsTokenValid(false);
+    navigate('/login');
   };
 
   return (

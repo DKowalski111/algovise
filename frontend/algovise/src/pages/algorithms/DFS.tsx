@@ -78,13 +78,11 @@ const DFS: React.FC = () => {
       const src = edge.source.id;
       const tgt = edge.target.id;
 
-      // Add source -> target
       if (!adjacencyList.has(src)) {
         adjacencyList.set(src, []);
       }
       adjacencyList.get(src).push({ id: tgt, weight: edge.weight });
 
-      // If undirected, add target -> source
       if (!directed) {
         if (!adjacencyList.has(tgt)) {
           adjacencyList.set(tgt, []);
@@ -96,7 +94,6 @@ const DFS: React.FC = () => {
     const stack = [{ id: sourceId, path: [sourceId] }];
     const visited = new Set();
 
-    // Perform DFS in one go
     while (stack.length > 0) {
       const popped = stack.pop();
       if (!popped) break;
@@ -190,7 +187,6 @@ const DFS: React.FC = () => {
       return;
     }
 
-    // Now we want "Pop the last node from the stack" => that's step 2
     setCurrentStepIndex(2);
 
     const { id, path } = popped;
@@ -212,7 +208,6 @@ const DFS: React.FC = () => {
       newVisited.add(id);
       setVisited(newVisited);
 
-      // This is "For each unvisited neighbor, push it onto the stack" => step 3
       setCurrentStepIndex(3);
 
       const neighbors = adjacencyList.get(id) || [];

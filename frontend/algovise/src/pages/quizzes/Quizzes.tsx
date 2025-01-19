@@ -102,8 +102,6 @@ const Quizzes: React.FC = () => {
         }
       }
 
-      console.log(completionStatus);
-
       setCompletedQuizzes(completionStatus);
     };
 

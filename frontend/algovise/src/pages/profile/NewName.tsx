@@ -1,20 +1,18 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Hook to navigate
+import { useNavigate } from "react-router-dom";
 import { getToken, getUserId, setToken } from "../../utils/AuthUtils";
 
 const NewName: React.FC = () => {
-  const [newName, setNewName] = useState<string>(""); // State for the new name input
-  const [error, setError] = useState<string>(""); // State for error messages
-  const [success, setSuccess] = useState<string>(""); // State for success messages
-  const navigate = useNavigate(); // Hook to navigate
+  const [newName, setNewName] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     const token = getToken();
     event.preventDefault();
-    setError(""); // Reset errors
-    setSuccess(""); // Reset success message
-    console.log(token);
-    console.log(newName);
+    setError("");
+    setSuccess("");
 
     if (!newName.trim()) {
       setError("Name cannot be empty.");

@@ -22,8 +22,6 @@ const FloydWarshall: React.FC = () => {
   };
 
   const handleAlgorithmClick = () => {
-    console.log("Source:", source);
-    console.log("Destination:", destination);
 
     if (!source || !destination) {
       alert("Please provide both source and destination.");
@@ -33,8 +31,6 @@ const FloydWarshall: React.FC = () => {
     const sourceNode = nodes.find((node: { label: string; }) => node.label === source);
     const destinationNode = nodes.find((node: { label: string; }) => node.label === destination);
 
-    console.log("Source Node:", sourceNode);
-    console.log("Destination Node:", destinationNode);
 
     if (!sourceNode || !destinationNode) {
       alert("Invalid source or destination.");
@@ -44,14 +40,12 @@ const FloydWarshall: React.FC = () => {
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    console.log("Source ID:", sourceId);
-    console.log("Destination ID:", destinationId);
 
     const adjacencyList = new Map();
     const distance: { [key: string]: { [key: string]: number } } = {};
-    const nextNode: { [key: string]: { [key: string]: any } } = {}; // For path reconstruction
+    const nextNode: { [key: string]: { [key: string]: any } } = {};
 
-    // Initialize the adjacency list, distance matrix, and next node matrix
+
     nodes.forEach((node: { id: string }) => {
       distance[node.id] = {};
       nextNode[node.id] = {};
@@ -81,7 +75,6 @@ const FloydWarshall: React.FC = () => {
       }
     });
 
-    console.log("Initial Distance Matrix:", distance);
 
     // Floyd-Warshall algorithm
     nodes.forEach((k: { id: string }) => {
@@ -95,8 +88,6 @@ const FloydWarshall: React.FC = () => {
       });
     });
 
-    console.log("Final Distance Matrix:", distance);
-    console.log("Next Node Matrix:", nextNode);
 
     // Reconstruct the path from source to destination
     const reconstructPath = (startId: string, endId: string) => {

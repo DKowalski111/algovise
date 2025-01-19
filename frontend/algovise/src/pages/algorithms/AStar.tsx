@@ -19,7 +19,6 @@ const AStar: React.FC = () => {
     return 0;
   };
 
-  // Steps for A* Explanation (adjust text as desired)
   const steps = [
     "",
     "Step 1: Initialize A*.\n" +
@@ -55,9 +54,6 @@ const AStar: React.FC = () => {
     setDestination(e.target.value);
   };
 
-  // ----------------------------------
-  // UTILITY: Build adjacency list
-  // ----------------------------------
   function buildAdjacencyList(
     edgesArr: { source: { id: any }; target: { id: any }; weight: any }[],
     isDirected: boolean
@@ -77,24 +73,17 @@ const AStar: React.FC = () => {
     return adjList;
   }
 
-  // -------------------------
-  // POPUP HELPER
-  // -------------------------
   function showPopup(message: string) {
     setPopupMessage(message);
     setIsPopupVisible(true);
   }
 
-  // -------------------------
-  // 1) FULL RUN OF A*
-  // -------------------------
   const handleAlgorithmClick = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
       return;
     }
 
-    // Validate source & destination
     const sourceNode = nodes.find((n: { label: string }) => n.label === source);
     const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
     if (!sourceNode || !destinationNode) {
@@ -105,36 +94,30 @@ const AStar: React.FC = () => {
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    // Build adjacency
     const adjList = buildAdjacencyList(edges, directed);
 
-    // Initialize g-scores
     const gMap = new Map();
     for (let n of nodes) {
       gMap.set(n.id, Infinity);
     }
     gMap.set(sourceId, 0);
 
-    // Initialize openSet
     let open = [{
       id: sourceId,
       g: 0,
-      f: 0 + heuristic(sourceId, destinationId), // f = g + h
+      f: 0 + heuristic(sourceId, destinationId),
       path: [sourceId]
     }];
 
     const closed = new Set();
 
     while (open.length > 0) {
-      // sort by smallest f
       open.sort((a, b) => a.f - b.f);
-      // pick node with smallest f
       const current = open.shift();
       if (!current) break;
 
       const { id: currentId, g: currentG, f: currentF, path } = current;
 
-      // if we are at destination => path found
       if (currentId === destinationId) {
         const pathLabels = path.map((nid) => {
           return nodes.find((node: { id: any }) => node.id === nid)?.label;
@@ -143,26 +126,20 @@ const AStar: React.FC = () => {
         return;
       }
 
-      // move current to closedSet
       closed.add(currentId);
 
-      // Relax neighbors
       const neighbors = adjList.get(currentId) || [];
       for (let neighbor of neighbors) {
         if (closed.has(neighbor.id)) continue;
 
-        // new G value
         const tentative_g = currentG + (neighbor.weight || 1);
         const old_g = gMap.get(neighbor.id);
 
         if (tentative_g < old_g) {
-          // update g
           gMap.set(neighbor.id, tentative_g);
 
-          // compute new f
           const new_f = tentative_g + heuristic(neighbor.id, destinationId);
 
-          // update openSet
           const newPath = [...path, neighbor.id];
           const existing = open.find((x) => x.id === neighbor.id);
           if (existing) {
@@ -181,13 +158,9 @@ const AStar: React.FC = () => {
       }
     }
 
-    // If openSet is empty and we didn't return, no path
     showPopup("No path exists.");
   };
 
-  // -----------------------------------
-  // 2) STEP-BY-STEP
-  // -----------------------------------
   const initializeAlgorithm = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
@@ -206,14 +179,12 @@ const AStar: React.FC = () => {
     const destinationId = destinationNode.id;
     const adjList = buildAdjacencyList(edges, directed);
 
-    // g-scores
     const gMap = new Map();
     for (let n of nodes) {
       gMap.set(n.id, Infinity);
     }
     gMap.set(sourceId, 0);
 
-    // openSet
     const initialOpenSet = [
       {
         id: sourceId,
@@ -229,7 +200,7 @@ const AStar: React.FC = () => {
     setAdjacencyList(adjList);
     setInitialized(true);
     setFinished(false);
-    setCurrentStepIndex(1); // Step 1: Initialize
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -243,19 +214,16 @@ const AStar: React.FC = () => {
       return;
     }
 
-    // If openSet empty => no path
     if (openSet.length === 0) {
-      setCurrentStepIndex(4); // "No path or ended"
+      setCurrentStepIndex(4);
       showPopup("No path exists.");
       setFinished(true);
       return;
     }
 
-    // 1) sort openSet by f
     const newOpenSet = [...openSet];
     newOpenSet.sort((a, b) => a.f - b.f);
 
-    // 2) pop first => node with smallest f
     const current = newOpenSet.shift();
     if (!current) {
       setCurrentStepIndex(4);
@@ -263,15 +231,13 @@ const AStar: React.FC = () => {
       setFinished(true);
       return;
     }
-    setCurrentStepIndex(2); // "Pick node with smallest f"
+    setCurrentStepIndex(2);
 
     const { id: currentId, g: currentG, path } = current;
     const destinationId = nodes.find((n: { label: string; }) => n.label === destination)?.id;
 
-    // check if this is the destination
     if (currentId === destinationId) {
-      // Path found
-      setCurrentStepIndex(4); // We can say the algorithm ended
+      setCurrentStepIndex(4);
       setFinished(true);
       const pathLabels = path.map((nid) =>
         nodes.find((node: { id: any; }) => node.id === nid)?.label
@@ -280,11 +246,9 @@ const AStar: React.FC = () => {
       return;
     }
 
-    // 3) Move it to closedSet
     const newClosedSet = new Set(closedSet);
     newClosedSet.add(currentId);
 
-    // 4) Relax neighbors
     setCurrentStepIndex(3);
     const neighbors = adjacencyList.get(currentId) || [];
     const newGScores = new Map(gScores);
@@ -299,7 +263,6 @@ const AStar: React.FC = () => {
         newGScores.set(neighbor.id, tentative_g);
         const new_f = tentative_g + heuristic(neighbor.id, destinationId);
 
-        // see if neighbor is already in openSet
         const existing = newOpenSet.find((x) => x.id === neighbor.id);
         if (existing) {
           existing.g = tentative_g;
@@ -316,15 +279,11 @@ const AStar: React.FC = () => {
       }
     }
 
-    // update states
     setOpenSet(newOpenSet);
     setClosedSet(newClosedSet);
     setGScores(newGScores);
   };
 
-  // -----------------------------------
-  // RESET
-  // -----------------------------------
   const resetAlgorithm = () => {
     setOpenSet([]);
     setClosedSet(new Set());
@@ -335,21 +294,16 @@ const AStar: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-  // -----------------------------------
-  // RENDER
-  // -----------------------------------
   return (
     <div
       className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
                  justify-content-center align-items-center align-content-center flex-wrap
                  justify-content-xxl-center align-items-xxl-center"
     >
-      {/* Popup Overlay */}
       <div
         className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
         onClick={() => setIsPopupVisible(false)}
       />
-      {/* Popup Modal */}
       {isPopupVisible && (
         <div className="popup">
           <p>{popupMessage}</p>
@@ -359,7 +313,6 @@ const AStar: React.FC = () => {
         </div>
       )}
 
-      {/* Table with Graph Info */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
@@ -457,7 +410,6 @@ const AStar: React.FC = () => {
         </table>
       </div>
 
-      {/* Graph Visualizer */}
       <div
         className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
                    align-items-center align-content-start flex-wrap justify-content-xxl-center
@@ -471,7 +423,6 @@ const AStar: React.FC = () => {
         A* Algorithm - Find Shortest Path
       </h1>
 
-      {/* Source / Destination Inputs */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>

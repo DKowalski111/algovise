@@ -51,7 +51,6 @@ const GraphCreator: React.FC = () => {
   const saveButtonClicked = async () => {
     try {
       const savedGraph = await saveGraph();
-      console.log(savedGraph);
       const updatedNodes = await saveNodes(savedGraph?.id);
       await saveEdges(updatedNodes, savedGraph?.id);
     } catch (error) {

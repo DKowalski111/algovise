@@ -3,6 +3,7 @@ package com.algovise.controllers;
 import com.algovise.configs.UserAuthenticationProvider;
 import com.algovise.dtos.QuizDto;
 import com.algovise.services.QuizService;
+import com.algovise.services.UserCompletedQuizzesService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +21,16 @@ import java.util.Objects;
 @RequestMapping("/quizzes")
 public class QuizController {
     private final QuizService quizService;
-
+    private final UserCompletedQuizzesService userCompletedQuizzesService;
     private final UserAuthenticationProvider userAuthenticationProvider;
 
     @Value("${quiz.upload.dir}")
     private String uploadDir;
 
-    public QuizController(QuizService quizService, UserAuthenticationProvider userAuthenticationProvider)
+    public QuizController(QuizService quizService, UserCompletedQuizzesService userCompletedQuizzesService, UserAuthenticationProvider userAuthenticationProvider)
     {
         this.quizService = quizService;
+        this.userCompletedQuizzesService = userCompletedQuizzesService;
         this.userAuthenticationProvider = userAuthenticationProvider;
     }
 
@@ -41,7 +43,7 @@ public class QuizController {
     @PostMapping("/add")
     public ResponseEntity<String> addQuiz( @RequestParam("title") String title, @RequestParam("file") MultipartFile file,
                                            @RequestParam("token") String token) {
-        if(userAuthenticationProvider.isUserAdmin(token))
+        if(!userAuthenticationProvider.isUserAdmin(token))
         {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not permitted to add new quiz.");
         }
@@ -49,8 +51,6 @@ public class QuizController {
         if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".json")) {
             return ResponseEntity.badRequest().body("Only JSON files are allowed.");
         }
-
-        System.out.println("Is json file");
 
         try {
             Path directory = Paths.get(uploadDir);
@@ -80,6 +80,32 @@ public class QuizController {
             return ResponseEntity.ok(content);
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Error reading quiz: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{quizId}")
+    public ResponseEntity<String> deleteQuiz(@PathVariable Long quizId, @RequestParam("token") String token) {
+        if (!userAuthenticationProvider.isUserAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not permitted to delete quizzes.");
+        }
+
+        try {
+            String filePath = quizService.getQuizFilePath(quizId);
+
+            Path path = Paths.get(filePath);
+            if (Files.exists(path)) {
+                Files.delete(path);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Quiz file not found.");
+            }
+
+            quizService.deleteQuiz(quizId);
+            userCompletedQuizzesService.deleteQuiz(quizId);
+
+            return ResponseEntity.ok("Quiz deleted successfully.");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting quiz: " + e.getMessage());
         }
     }
 }

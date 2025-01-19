@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Answer {
   text: string;
@@ -39,10 +39,13 @@ const QuizViewer: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Map<number, number | null>>(new Map());
+  const [isUserAdmin, setIsUserAdmin] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submittedAnswers, setSubmittedAnswers] = useState<Map<number, boolean>>(new Map());
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -75,8 +78,63 @@ const QuizViewer: React.FC = () => {
       }
     };
 
+    const fetchAdminStatus = async () => {
+      const token = getToken();
+
+      try {
+        const response = await fetch("http://localhost:8080/admin", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "text/plain",
+          },
+          body: token,
+        });
+
+        if (response.ok) {
+          const isAdmin = await response.json();
+          setIsUserAdmin(isAdmin);
+        } else {
+          setIsUserAdmin(false);
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsUserAdmin(false);
+      }
+    };
+
     fetchQuizData();
+    fetchAdminStatus();
   }, [quizId]);
+
+  const handleDeleteQuiz = async () => {
+    const token = getToken();
+
+    if (!token) {
+      alert("Authorization token not found.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/quizzes/delete/${quizId}?token=${token}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        alert("Quiz deleted successfully.");
+        navigate("/quizzes");
+      } else {
+        alert("Failed to delete quiz.");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      alert("An error occurred while deleting the quiz.");
+    }
+  };
 
   const handleAnswerClick = (questionId: number, answerIndex: number) => {
     if (submitted) return;
@@ -136,7 +194,6 @@ const QuizViewer: React.FC = () => {
         );
 
         if (response.ok) {
-          console.log("Quiz marked as completed.");
         } else {
           console.error("Failed to mark quiz as completed:", response.statusText);
         }
@@ -174,6 +231,15 @@ const QuizViewer: React.FC = () => {
             OK
           </button>
         </div>
+      )}
+      {isUserAdmin && (
+        <button
+          className="btn btn-danger"
+          style={{ marginBottom: "20px" }}
+          onClick={handleDeleteQuiz}
+        >
+          Delete Quiz
+        </button>
       )}
       {quizData.questions.map((question, index) => (
         <div

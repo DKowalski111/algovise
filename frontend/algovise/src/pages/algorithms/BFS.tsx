@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import GraphVisualizer from '../graph-creator/components/GraphVisualiser';
 
-// You can rename this component to "BFSAlgorithm" or "BFS" as you wish
 const BFS: React.FC = () => {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
@@ -15,7 +14,6 @@ const BFS: React.FC = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // BFS steps (feel free to adjust or expand these descriptions)
   const steps = [
     "",
     "Step 1: Initialize BFS.\n" +
@@ -42,9 +40,6 @@ const BFS: React.FC = () => {
   const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
-  // --------------------
-  // Input Handlers
-  // --------------------
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
   };
@@ -53,17 +48,11 @@ const BFS: React.FC = () => {
     setDestination(e.target.value);
   };
 
-  // -------------------------
-  // POPUP HELPER
-  // -------------------------
   function showPopup(message: string) {
     setPopupMessage(message);
     setIsPopupVisible(true);
   }
 
-  // -------------------------
-  // UTILITY: Build adjacency list
-  // -------------------------
   function buildAdjacencyList() {
     const adjList = new Map();
     edges.forEach((edge: any) => {
@@ -73,7 +62,6 @@ const BFS: React.FC = () => {
       if (!adjList.has(src)) adjList.set(src, []);
       adjList.get(src).push({ id: tgt });
 
-      // If undirected, also add reverse edge
       if (!directed) {
         if (!adjList.has(tgt)) adjList.set(tgt, []);
         adjList.get(tgt).push({ id: src });
@@ -82,16 +70,12 @@ const BFS: React.FC = () => {
     return adjList;
   }
 
-  // ---------------------------
-  // 1) "Perform Algorithm" BFS
-  // ---------------------------
   const handleAlgorithmClick = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
       return;
     }
 
-    // Validate source & destination
     const sourceNode = nodes.find((n: { label: string }) => n.label === source);
     const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
     if (!sourceNode || !destinationNode) {
@@ -102,10 +86,8 @@ const BFS: React.FC = () => {
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    // Build adjacency list
     const adjList = buildAdjacencyList();
 
-    // BFS
     const visitedSet = new Set<any>();
     const queueArr = [{ id: sourceId, path: [sourceId] }];
     visitedSet.add(sourceId);
@@ -113,7 +95,6 @@ const BFS: React.FC = () => {
     while (queueArr.length > 0) {
       const { id: currentId, path } = queueArr.shift()!;
 
-      // If we've reached the destination => done
       if (currentId === destinationId) {
         const pathLabels = path.map((nid) =>
           nodes.find((node: { id: any }) => node.id === nid)?.label
@@ -122,7 +103,6 @@ const BFS: React.FC = () => {
         return;
       }
 
-      // Otherwise, enqueue unvisited neighbors
       const neighbors = adjList.get(currentId) || [];
       for (const neighbor of neighbors) {
         if (!visitedSet.has(neighbor.id)) {
@@ -132,13 +112,9 @@ const BFS: React.FC = () => {
       }
     }
 
-    // If the queue empties, no path
     showPopup("No path exists.");
   };
 
-  // --------------------------
-  // 2) STEP-BY-STEP BFS
-  // --------------------------
   const initializeAlgorithm = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
@@ -152,10 +128,8 @@ const BFS: React.FC = () => {
       return;
     }
 
-    // build adjacency list
     const adjList = buildAdjacencyList();
 
-    // set initial state
     const sourceId = sourceNode.id;
     const visitedSet = new Set<any>();
     visitedSet.add(sourceId);
@@ -165,7 +139,7 @@ const BFS: React.FC = () => {
     setVisited(visitedSet);
     setInitialized(true);
     setFinished(false);
-    setCurrentStepIndex(1); // Step 1: Initialize BFS
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -179,15 +153,13 @@ const BFS: React.FC = () => {
       return;
     }
 
-    // If queue is empty => no path
     if (queue.length === 0) {
-      setCurrentStepIndex(4); // Step 4: "No path found"
+      setCurrentStepIndex(4);
       showPopup("No path exists.");
       setFinished(true);
       return;
     }
 
-    // Dequeue the first node
     const newQueue = [...queue];
     const front = newQueue.shift();
     if (!front) {
@@ -196,15 +168,14 @@ const BFS: React.FC = () => {
       setFinished(true);
       return;
     }
-    setCurrentStepIndex(2); // Step 2: "Dequeue"
+    setCurrentStepIndex(2);
 
     const { id: currentId, path } = front;
     const destinationId = nodes.find((n: { label: string }) => n.label === destination)?.id;
 
-    // Check if it's the destination
     if (currentId === destinationId) {
       setFinished(true);
-      setCurrentStepIndex(4); // Show final step: "Algorithm ended"
+      setCurrentStepIndex(4);
       const pathLabels = path.map((nid) =>
         nodes.find((node: { id: any }) => node.id === nid)?.label
       );
@@ -212,8 +183,7 @@ const BFS: React.FC = () => {
       return;
     }
 
-    // If not the destination, enqueue unvisited neighbors
-    setCurrentStepIndex(3); // Step 3: "For each unvisited neighbor..."
+    setCurrentStepIndex(3);
 
     const neighbors = adjacencyList.get(currentId) || [];
     const newVisited = new Set(visited);
@@ -225,14 +195,10 @@ const BFS: React.FC = () => {
       }
     }
 
-    // update states
     setQueue(newQueue);
     setVisited(newVisited);
   };
 
-  // ------------------------
-  // RESET
-  // ------------------------
   const resetAlgorithm = () => {
     setQueue([]);
     setVisited(new Set());
@@ -242,21 +208,16 @@ const BFS: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-  // -------------------------
-  // RENDER
-  // -------------------------
   return (
     <div
       className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
                  justify-content-center align-items-center align-content-center flex-wrap
                  justify-content-xxl-center align-items-xxl-center"
     >
-      {/* Popup Overlay */}
       <div
         className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
         onClick={() => setIsPopupVisible(false)}
       />
-      {/* Popup Modal */}
       {isPopupVisible && (
         <div className="popup">
           <p>{popupMessage}</p>
@@ -265,8 +226,6 @@ const BFS: React.FC = () => {
           </button>
         </div>
       )}
-
-      {/* Graph Info Table */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
@@ -364,7 +323,6 @@ const BFS: React.FC = () => {
         </table>
       </div>
 
-      {/* Graph Visualizer */}
       <div
         className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
                    align-items-center align-content-start flex-wrap justify-content-xxl-center
@@ -411,7 +369,6 @@ const BFS: React.FC = () => {
         </button>
       </div>
 
-      {/* Step Descriptions */}
       <div className="mt-4">
         {steps.map((step, index) => (
           <p

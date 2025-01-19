@@ -15,9 +15,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class QuizService {
-    @Value("${quiz.upload.dir}")
-    private String uploadDir;
-
     private final QuizRepository quizRepository;
 
     public QuizService(QuizRepository quizRepository) {
@@ -37,23 +34,6 @@ public class QuizService {
         return Files.readString(filePath);
     }
 
-//    public void saveQuiz(QuizDto quizDto, String jsonContent) throws IOException {
-//        Path directory = Paths.get(uploadDir);
-//        if (!Files.exists(directory)) {
-//            Files.createDirectories(directory);
-//        }
-//
-//        String fileName = quizDto.getTitle().replaceAll("\\s+", "_") + ".json";
-//        Path filePath = directory.resolve(fileName);
-//        Files.writeString(filePath, jsonContent);
-//
-//        Quiz quiz = new Quiz();
-//        quiz.setTitle(quizDto.getTitle());
-//        quiz.setFilePath(filePath.toString());
-//
-//        quizRepository.save(quiz);
-//    }
-
     public void saveQuiz(String title, String filePath) {
         Quiz quiz = new Quiz();
         quiz.setTitle(title);
@@ -62,4 +42,15 @@ public class QuizService {
         System.out.println("Saving quiz - " + quiz);
         quizRepository.save(quiz);
     }
+
+    public String getQuizFilePath(Long quizId) {
+        return quizRepository.findById(quizId)
+                .map(Quiz::getFilePath)
+                .orElseThrow(() -> new RuntimeException("Quiz not found with ID: " + quizId));
+    }
+
+    public void deleteQuiz(Long quizId) {
+        quizRepository.deleteById(quizId);
+    }
+
 }

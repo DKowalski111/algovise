@@ -17,11 +17,6 @@ const BellmanFord: React.FC = () => {
     { sourceId: any; targetId: any; weight: number }[]
   >([]);
 
-  // Bellman-Ford typically goes:
-  // 1) Initialize distances (source = 0, others = ∞).
-  // 2) Relax all edges up to (V - 1) times.
-  // 3) Check for negative-weight cycles by trying one more relaxation.
-
   const steps = [
     "",
     "Step 1: Initialize Bellman-Ford.\n" +
@@ -46,9 +41,6 @@ const BellmanFord: React.FC = () => {
   const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
-  // --------------------
-  // Input Handlers
-  // --------------------
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
   };
@@ -57,25 +49,16 @@ const BellmanFord: React.FC = () => {
     setDestination(e.target.value);
   };
 
-  // -------------------------
-  // POPUP HELPER
-  // -------------------------
   function showPopup(message: string) {
     setPopupMessage(message);
     setIsPopupVisible(true);
   }
-
-  // -------------------------
-  // Helper: Build an edge list
-  // -------------------------
   function buildEdgeList() {
-    // We'll flatten edges into an array: { sourceId, targetId, weight }
-    // If undirected, we'll include both directions
     const edgeArray: { sourceId: any; targetId: any; weight: number }[] = [];
     edges.forEach((edgeObj: any) => {
       const { id: src } = edgeObj.source;
       const { id: tgt } = edgeObj.target;
-      const w = edgeObj.weight ?? 1; // default weight = 1 if not provided
+      const w = edgeObj.weight ?? 1;
       edgeArray.push({ sourceId: src, targetId: tgt, weight: w });
       if (!directed) {
         edgeArray.push({ sourceId: tgt, targetId: src, weight: w });
@@ -84,11 +67,6 @@ const BellmanFord: React.FC = () => {
     return edgeArray;
   }
 
-  // -------------------------
-  // UTILITY: Reconstruct path
-  // -------------------------
-  // If we want to reconstruct the path from `source` to `destination` after the algorithm,
-  // we can follow `predecessors` back from destination to source.
   function getPath(predecessorMap: Map<any, any>, src: any, dest: any): any[] {
     const path = [];
     let current = dest;
@@ -101,19 +79,14 @@ const BellmanFord: React.FC = () => {
       path.reverse();
       return path;
     }
-    return []; // no path found
+    return [];
   }
 
-  // -------------------------
-  // 1) Full Run of Bellman-Ford
-  // -------------------------
   const handleAlgorithmClick = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
       return;
     }
-
-    // Validate source & destination
     const sourceNode = nodes.find((n: { label: string }) => n.label === source);
     const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
     if (!sourceNode || !destinationNode) {
@@ -123,23 +96,17 @@ const BellmanFord: React.FC = () => {
     const sourceId = sourceNode.id;
     const destinationId = destinationNode.id;
 
-    // Create distances map (node.id -> number)
     const distMap = new Map();
-    // Create predecessor map (node.id -> node.id)
     const predMap = new Map();
 
-    // Initialize
     nodes.forEach((node: any) => {
       distMap.set(node.id, Infinity);
       predMap.set(node.id, undefined);
     });
     distMap.set(sourceId, 0);
 
-    // Build a flat edge list
     const edgeArray = buildEdgeList();
 
-    // Bellman-Ford:
-    // 1) Relax edges V-1 times
     for (let i = 0; i < nodes.length - 1; i++) {
       let updated = false;
       for (let edge of edgeArray) {
@@ -151,11 +118,9 @@ const BellmanFord: React.FC = () => {
           updated = true;
         }
       }
-      // If no update in an iteration => early stop
       if (!updated) break;
     }
 
-    // 2) Check for negative cycles
     for (let edge of edgeArray) {
       const { sourceId: u, targetId: v, weight } = edge;
       if (distMap.get(u) !== Infinity && distMap.get(u) + weight < distMap.get(v)) {
@@ -164,10 +129,8 @@ const BellmanFord: React.FC = () => {
       }
     }
 
-    // If we reach here, no negative cycles. We can reconstruct path
     const path = getPath(predMap, sourceId, destinationId);
     if (path.length > 0) {
-      // Convert path of ids to labels
       const pathLabels = path.map((id) =>
         nodes.find((node: { id: any }) => node.id === id)?.label
       );
@@ -177,10 +140,6 @@ const BellmanFord: React.FC = () => {
       showPopup("No path exists from source to destination.");
     }
   };
-
-  // -------------------------
-  // 2) Step-by-Step
-  // -------------------------
   const initializeAlgorithm = () => {
     if (!source || !destination) {
       showPopup("Please provide both source and destination.");
@@ -194,7 +153,6 @@ const BellmanFord: React.FC = () => {
       return;
     }
 
-    // Create distances
     const distMap = new Map();
     const predMap = new Map();
     for (let node of nodes) {
@@ -203,7 +161,6 @@ const BellmanFord: React.FC = () => {
     }
     distMap.set(sourceNode.id, 0);
 
-    // Build edge list
     const edgeArray = buildEdgeList();
 
     setDistances(distMap);
@@ -212,7 +169,7 @@ const BellmanFord: React.FC = () => {
     setCurrentIteration(0);
     setInitialized(true);
     setFinished(false);
-    setCurrentStepIndex(1); // Step 1: Initialize
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -225,14 +182,12 @@ const BellmanFord: React.FC = () => {
       return;
     }
 
-    // We typically relax edges up to V-1 times, then do a final check
     const V = nodes.length;
     let distMap = new Map(distances);
     let predMap = new Map(predecessors);
 
-    // 0) If currentIteration < V-1 => we're in the "relax edges" phase
     if (currentIteration < V - 1) {
-      setCurrentStepIndex(2); // "Relax all edges"
+      setCurrentStepIndex(2);
       let updated = false;
       for (let edge of edgesList) {
         const { sourceId: u, targetId: v, weight } = edge;
@@ -248,15 +203,12 @@ const BellmanFord: React.FC = () => {
       setPredecessors(predMap);
       setCurrentIteration(currentIteration + 1);
 
-      // if no update => we can skip to next phase (negative cycle check)
       if (!updated) {
-        // jump directly to negative cycle check
         setCurrentIteration(V - 1);
       }
     }
     else if (currentIteration === V - 1) {
-      // Now do negative cycle check
-      setCurrentStepIndex(3); // "Check for negative cycles"
+      setCurrentStepIndex(3);
 
       for (let edge of edgesList) {
         const { sourceId: u, targetId: v, weight } = edge;
@@ -270,12 +222,10 @@ const BellmanFord: React.FC = () => {
           return;
         }
       }
-      // no negative cycle => done
       setFinished(true);
       setCurrentIteration(currentIteration + 1);
-      setCurrentStepIndex(4); // "Algorithm ended"
+      setCurrentStepIndex(4);
 
-      // Optionally show path if user has a destination in mind
       const destinationNode = nodes.find((n: { label: string }) => n.label === destination);
       if (destinationNode) {
         const path = getPath(predMap, nodes.find((n: { label: string }) => n.label === source)?.id, destinationNode.id);
@@ -291,15 +241,11 @@ const BellmanFord: React.FC = () => {
       }
     }
     else {
-      // We've done all steps
       showPopup("Algorithm is already finished.");
       setCurrentStepIndex(4);
     }
   };
 
-  // -------------------------
-  // RESET
-  // -------------------------
   const resetAlgorithm = () => {
     setDistances(new Map());
     setPredecessors(new Map());
@@ -310,21 +256,16 @@ const BellmanFord: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-  // -----------------------------------
-  // RENDER
-  // -----------------------------------
   return (
     <div
       className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
                  justify-content-center align-items-center align-content-center flex-wrap
                  justify-content-xxl-center align-items-xxl-center"
     >
-      {/* Popup Overlay */}
       <div
         className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
         onClick={() => setIsPopupVisible(false)}
       />
-      {/* Popup Modal */}
       {isPopupVisible && (
         <div className="popup">
           <p>{popupMessage}</p>
@@ -334,7 +275,6 @@ const BellmanFord: React.FC = () => {
         </div>
       )}
 
-      {/* Table with Graph Info */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
@@ -432,7 +372,6 @@ const BellmanFord: React.FC = () => {
         </table>
       </div>
 
-      {/* Graph Visualizer */}
       <div
         className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
                    align-items-center align-content-start flex-wrap justify-content-xxl-center
@@ -446,7 +385,6 @@ const BellmanFord: React.FC = () => {
         Bellman-Ford Algorithm - Find Shortest Path
       </h1>
 
-      {/* Source / Destination Inputs */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -468,7 +406,6 @@ const BellmanFord: React.FC = () => {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="d-flex flex-row justify-content-center align-items-center">
         <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
           Perform Algorithm
@@ -481,7 +418,6 @@ const BellmanFord: React.FC = () => {
         </button>
       </div>
 
-      {/* Step Descriptions */}
       <div className="mt-4">
         {steps.map((step, index) => (
           <p

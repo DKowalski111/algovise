@@ -7,12 +7,6 @@ import { useEffect } from 'react';
 import ProtectedRoute from './router/ProtectedRouter';
 import Dashboard from './pages/dashboard/Dashboard';
 import Tutorials from './pages/tutorials/Tutorials';
-import FundamentalsOfGraphTheory from './pages/tutorials/fundamentals-of-graph-theory/FundamentalsOfGraphTheory';
-import AdvancedGraphAlgorithms from './pages/tutorials/advanced-graph-algorithms/AdvancedGraphAlgorithms';
-import AlgorithmsForDirectedGraphs from './pages/tutorials/algorithms-for-directed-graphs/AlgorithmsForDirectedGraphs';
-import BasicGraphAlgorithms from './pages/tutorials/basic-graph-algorithms/BasicGraphAlgorithms';
-import ClassicProblems from './pages/tutorials/classic-problems/ClassicProblems';
-import RealWorldGraphAlgorithms from './pages/tutorials/real-world-graph-algorithms/RealWorldGraphAlgorithms';
 import Quizzes from './pages/quizzes/Quizzes';
 import Profile from './pages/profile/Profile';
 import NewName from './pages/profile/NewName';
@@ -31,11 +25,11 @@ import Prim from './pages/algorithms/Prim';
 import SavedGraphs from './pages/savedGraphs/SavedGraphs';
 import QuizCreator from './pages/quizzes/QuizCreator';
 import QuizViewer from './pages/quizzes/QuizViewer';
+import TutorialCreator from './pages/tutorials/TutorialCreator';
+import TutorialViewer from './pages/tutorials/TutorialViewer';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
-    console.log(localStorage.getItem("token"));
-    console.log(localStorage.getItem("id"));
   }, [])
 
   return element;
@@ -51,12 +45,6 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/tutorials" element={<Tutorials />} />
-          <Route path="/tutorials/fundamentals-of-graph-theory" element={<FundamentalsOfGraphTheory />} />
-          <Route path="/tutorials/advanced-graph-algorithms" element={<AdvancedGraphAlgorithms />} />
-          <Route path="/tutorials/algorithms-for-directed-graphs" element={<AlgorithmsForDirectedGraphs />} />
-          <Route path="/tutorials/basic-graph-algorithms" element={<BasicGraphAlgorithms />} />
-          <Route path="/tutorials/classic-problems" element={<ClassicProblems />} />
-          <Route path="/tutorials/real-world-graph-algorithms" element={<RealWorldGraphAlgorithms />} />
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:quizId" element={<QuizViewer />} />
           <Route path='/profile' element={<Profile />} />
@@ -75,6 +63,8 @@ function App() {
           <Route path='/prim-algorithm' element={<Prim />} />
           <Route path='/saved-graphs' element={<SavedGraphs />} />
           <Route path='/quiz-creator' element={<QuizCreator />} />
+          <Route path='/tutorial-creator' element={<TutorialCreator />} />
+          <Route path="/tutorials/:tutorialId" element={<TutorialViewer />} />
         </Route>
       </Routes>
     </div>
