@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Hook to navigate
+import { useNavigate } from "react-router-dom";
 import { getToken, getUserId } from "../../utils/AuthUtils";
 
 const NewPassword: React.FC = () => {
-  const [newPassword, setNewPassword] = useState<string>(""); // State for the new password
-  const [confirmPassword, setConfirmPassword] = useState<string>(""); // State for confirming the new password
-  const [error, setError] = useState<string>(""); // State for error messages
-  const [success, setSuccess] = useState<string>(""); // State for success messages
-  const navigate = useNavigate(); // Hook to navigate
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     const token = getToken();
     event.preventDefault();
-    setError(""); // Reset errors
-    setSuccess(""); // Reset success messages
+    setError("");
+    setSuccess("");
 
-    // Validation
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -36,7 +35,7 @@ const NewPassword: React.FC = () => {
       }
 
       setSuccess("Password updated successfully!");
-      navigate("/profile"); // Redirect to profile page after success
+      navigate("/profile");
     } catch (error: any) {
       setError(error.message);
     }
@@ -87,7 +86,7 @@ const NewPassword: React.FC = () => {
                 type="button"
                 className="btn btn-secondary"
                 style={{ width: "48%" }}
-                onClick={() => navigate("/profile")} // Navigate back to profile
+                onClick={() => navigate("/profile")}
               >
                 Cancel
               </button>

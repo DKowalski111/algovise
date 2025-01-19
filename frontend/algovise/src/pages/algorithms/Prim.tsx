@@ -48,27 +48,18 @@ const Prim: React.FC = () => {
   const nodes = location.state?.nodes || [];
   const edges = location.state?.edges || [];
   const weighted = location.state?.weighted || false;
-  const directed = location.state?.directed || false; // Prim’s is for undirected typically
+  const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
-  // --------------------
-  // Input Handlers
-  // --------------------
   const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSource(e.target.value);
   };
 
-  // -------------------------
-  // POPUP HELPER
-  // -------------------------
   function showPopup(message: string) {
     setPopupMessage(message);
     setIsPopupVisible(true);
   }
 
-  // -------------------------
-  // Build adjacency list for (undirected) graph
-  // -------------------------
   function buildAdjacencyList() {
     const adjList = new Map();
     edges.forEach((edgeObj: any) => {
@@ -79,7 +70,6 @@ const Prim: React.FC = () => {
       if (!adjList.has(src)) adjList.set(src, []);
       adjList.get(src).push({ id: tgt, weight: w });
 
-      // If undirected, also add reversed edge
       if (!directed) {
         if (!adjList.has(tgt)) adjList.set(tgt, []);
         adjList.get(tgt).push({ id: src, weight: w });
@@ -88,9 +78,6 @@ const Prim: React.FC = () => {
     return adjList;
   }
 
-  // ---------------------------------
-  // Perform Algorithm (Full Run)
-  // ---------------------------------
   const handleAlgorithmClick = () => {
     if (directed) {
       showPopup("Prim’s algorithm is for undirected graphs. You're using a directed graph.");
@@ -101,7 +88,6 @@ const Prim: React.FC = () => {
       return;
     }
 
-    // Validate the source
     const sourceNode = nodes.find((node: { label: string }) => node.label === source);
     if (!sourceNode) {
       showPopup("Invalid source.");
@@ -111,33 +97,23 @@ const Prim: React.FC = () => {
     const startId = sourceNode.id;
     const adjList = buildAdjacencyList();
 
-    // We'll maintain:
-    //  - A set of visited nodes
-    //  - A priority list of edges (smallest weight first)
-    //  - The MST edges
     const visitedSet = new Set<any>();
     visitedSet.add(startId);
     const mst: Edge[] = [];
 
-    // Gather initial edges from the source
     let candidates: Edge[] = [];
     (adjList.get(startId) || []).forEach((neighbor: Neighbor) => {
       candidates.push({ from: startId, to: neighbor.id, weight: neighbor.weight });
     });
 
     while (candidates.length > 0) {
-      // sort by weight (ascending)
       candidates.sort((a, b) => a.weight - b.weight);
-      // pick the smallest edge
       const edge = candidates.shift();
       if (!edge) break;
 
       if (!visitedSet.has(edge.to)) {
-        // This edge leads to an unvisited node => it's valid
         visitedSet.add(edge.to);
         mst.push(edge);
-
-        // Add that node's edges
         (adjList.get(edge.to) || []).forEach((neighbor: Neighbor) => {
           if (!visitedSet.has(neighbor.id)) {
             candidates.push({
@@ -148,7 +124,6 @@ const Prim: React.FC = () => {
           }
         });
       }
-      // else we skip it because it leads to a visited node
     }
 
     if (mst.length === nodes.length - 1) {
@@ -160,9 +135,6 @@ const Prim: React.FC = () => {
     }
   };
 
-  // ---------------------------------
-  // Step-by-Step
-  // ---------------------------------
   const initializeAlgorithm = () => {
     if (directed) {
       showPopup("Prim’s algorithm is for undirected graphs.");
@@ -181,11 +153,9 @@ const Prim: React.FC = () => {
     const adjList = buildAdjacencyList();
     const startId = sourceNode.id;
 
-    // visited set
     const visitedSet = new Set<any>();
     visitedSet.add(startId);
 
-    // gather initial edges
     const initialEdges: Edge[] = [];
     (adjList.get(startId) || []).forEach((neighbor: Neighbor) => {
       initialEdges.push({ from: startId, to: neighbor.id, weight: neighbor.weight });
@@ -197,7 +167,7 @@ const Prim: React.FC = () => {
     setMstEdges([]);
     setInitialized(true);
     setFinished(false);
-    setCurrentStepIndex(1); // Step 1: "Initialize"
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -210,18 +180,15 @@ const Prim: React.FC = () => {
       return;
     }
 
-    // If no candidate edges left => done
     if (edgeCandidates.length === 0) {
       setFinished(true);
-      setCurrentStepIndex(4); // "MST complete or disconnected"
+      setCurrentStepIndex(4);
       showPopup(`No more edges to process. MST has ${mstEdges.length} edges.`);
       return;
     }
 
-    // Step 2: pick the smallest edge
     setCurrentStepIndex(2);
 
-    // sort edges
     const newCandidates = [...edgeCandidates];
     newCandidates.sort((a, b) => a.weight - b.weight);
     const smallest = newCandidates.shift();
@@ -232,14 +199,11 @@ const Prim: React.FC = () => {
       return;
     }
 
-    // check if it leads to an unvisited node
     if (!visited.has(smallest.to)) {
-      // valid edge => add to MST, mark visited
       const newMST = [...mstEdges, smallest];
       const newVisited = new Set(visited);
       newVisited.add(smallest.to);
 
-      // Step 3: gather that node's edges
       setCurrentStepIndex(3);
 
       (adjacencyList.get(smallest.to) || []).forEach((neighbor: Neighbor) => {
@@ -255,21 +219,16 @@ const Prim: React.FC = () => {
       setMstEdges(newMST);
       setVisited(newVisited);
 
-      // check if MST is done
       if (newMST.length === nodes.length - 1) {
         setFinished(true);
         setCurrentStepIndex(4);
         showPopup(`MST complete with ${newMST.length} edges.`);
       }
     }
-    // If the edge leads to a visited node, we skip it
 
     setEdgeCandidates(newCandidates);
   };
 
-  // ---------------------------------
-  // RESET
-  // ---------------------------------
   const resetAlgorithm = () => {
     setAdjacencyList(new Map());
     setVisited(new Set());
@@ -280,21 +239,16 @@ const Prim: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-  // ---------------------------------
-  // RENDER
-  // ---------------------------------
   return (
     <div
       className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
                  justify-content-center align-items-center align-content-center flex-wrap
                  justify-content-xxl-center align-items-xxl-center"
     >
-      {/* Popup Overlay */}
       <div
         className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
         onClick={() => setIsPopupVisible(false)}
       />
-      {/* Popup Modal */}
       {isPopupVisible && (
         <div className="popup">
           <p>{popupMessage}</p>
@@ -304,7 +258,6 @@ const Prim: React.FC = () => {
         </div>
       )}
 
-      {/* Graph Info Table */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
@@ -402,7 +355,6 @@ const Prim: React.FC = () => {
         </table>
       </div>
 
-      {/* Graph Visualizer */}
       <div
         className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
                    align-items-center align-content-start flex-wrap justify-content-xxl-center
@@ -416,7 +368,6 @@ const Prim: React.FC = () => {
         Prim's Algorithm - Minimum Spanning Tree
       </h1>
 
-      {/* Source Node (start of MST) */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source Node</p>
@@ -429,7 +380,6 @@ const Prim: React.FC = () => {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="d-flex flex-row justify-content-center align-items-center">
         <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
           Perform Algorithm
@@ -442,7 +392,6 @@ const Prim: React.FC = () => {
         </button>
       </div>
 
-      {/* Step Descriptions */}
       <div className="mt-4">
         {steps.map((step, index) => (
           <p
@@ -459,7 +408,6 @@ const Prim: React.FC = () => {
         ))}
       </div>
 
-      {/* MST Edges So Far */}
       <div style={{ color: 'var(--bs-light)', marginTop: '1rem' }}>
         <h5>MST Edges Chosen So Far:</h5>
         <ul>

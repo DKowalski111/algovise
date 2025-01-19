@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Do przekierowania użytkownika
+import { useNavigate } from "react-router-dom";
 import SignUp from "../../types/registration/SignUp";
 
 const Registration = () => {
-  const [name, setName] = useState(""); // Stan dla nazwy użytkownika
-  const [email, setEmail] = useState(""); // Stan dla emaila
-  const [password, setPassword] = useState(""); // Stan dla hasła
-  const [error, setError] = useState(""); // Stan dla błędów
-  const navigate = useNavigate(); // Hook do przekierowania
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(""); // Reset błędów
+    setError("");
 
     const signUpData = new SignUp(name, email, password);
 
@@ -29,13 +29,13 @@ const Registration = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem("token", data.token); // Przechowywanie tokenu
+      localStorage.setItem("token", data.token);
       localStorage.setItem("id", data.id);
       localStorage.setItem("name", data.name);
       localStorage.setItem("email", data.email);
       navigate("/");
     } catch (error: any) {
-      setError(error.message); // Wyświetlenie błędu w UI
+      setError(error.message);
     }
   };
 

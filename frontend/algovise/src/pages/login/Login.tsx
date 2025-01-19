@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Do przekierowania użytkownika
+import { Link, useNavigate } from "react-router-dom";
 import Credentials from "../../types/login/Credentials";
 
 const Login = () => {
-  const [name, setName] = useState(""); // Stan dla nazwy użytkownika
-  const [password, setPassword] = useState(""); // Stan dla hasła
-  const [error, setError] = useState(""); // Stan dla błędów
-  const navigate = useNavigate(); // Hook do przekierowania
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(""); // Reset błędów
+    setError("");
 
     const credentials = new Credentials(name, password);
 

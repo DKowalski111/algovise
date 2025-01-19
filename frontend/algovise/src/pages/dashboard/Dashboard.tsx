@@ -81,8 +81,8 @@ const Dashboard: React.FC = () => {
           key={index}
           to={tile.path}
           style={{
-            textDecoration: "none", // Removes default underline for links
-            width: "40%", // Ensures tiles maintain size
+            textDecoration: "none",
+            width: "40%",
           }}
           className="mx-3 my-5"
         >

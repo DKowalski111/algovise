@@ -1,20 +1,19 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Hook to navigate
+import { useNavigate } from "react-router-dom";
 import { getToken, getUserId } from "../../utils/AuthUtils";
 
 const NewEmail: React.FC = () => {
-  const [newEmail, setNewEmail] = useState<string>(""); // State for the new email input
-  const [error, setError] = useState<string>(""); // State for error messages
-  const [success, setSuccess] = useState<string>(""); // State for success messages
-  const navigate = useNavigate(); // Hook to navigate
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     const token = getToken();
     event.preventDefault();
-    setError(""); // Reset errors
-    setSuccess(""); // Reset success message
+    setError("");
+    setSuccess("");
 
-    // Validate the email format
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailPattern.test(newEmail)) {
       setError("Please enter a valid email address.");
@@ -36,9 +35,9 @@ const NewEmail: React.FC = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem("email", data.email); // Store the updated email in localStorage
+      localStorage.setItem("email", data.email);
       setSuccess("Email updated successfully!");
-      navigate("/profile"); // Navigate to the profile page or any other page after successful update
+      navigate("/profile");
     } catch (error: any) {
       setError(error.message);
     }
@@ -80,7 +79,7 @@ const NewEmail: React.FC = () => {
                 type="button"
                 className="btn btn-secondary"
                 style={{ width: "48%" }}
-                onClick={() => navigate("/profile")} // Navigate back to profile
+                onClick={() => navigate("/profile")}
               >
                 Cancel
               </button>

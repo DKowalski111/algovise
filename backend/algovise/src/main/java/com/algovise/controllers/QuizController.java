@@ -58,8 +58,6 @@ public class QuizController {
                 Files.createDirectories(directory);
             }
 
-            System.out.println("Directory created - " + directory);
-
             String fileName = file.getOriginalFilename();
             Path filePath = directory.resolve(fileName);
             Files.write(filePath, file.getBytes());

@@ -4,14 +4,14 @@ import { getToken } from '../../utils/AuthUtils';
 const QuizCreator: React.FC = () => {
   const [quizTitle, setQuizTitle] = useState('');
   const [quizFile, setQuizFile] = useState<File | null>(null);
-  const [isUserAdmin, setIsUserAdmin] = useState<boolean | null>(null); // Changed to boolean
+  const [isUserAdmin, setIsUserAdmin] = useState<boolean | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       setQuizFile(file);
-      setStatusMessage(`File selected: ${file.name}`); // Display file name
+      setStatusMessage(`File selected: ${file.name}`);
     } else {
       setQuizFile(null);
       setStatusMessage('No file selected.');
@@ -88,7 +88,7 @@ const QuizCreator: React.FC = () => {
   }, []);
 
   if (isUserAdmin === null) {
-    return <p>Loading...</p>; // Show a loading state while fetching user role
+    return <p>Loading...</p>;
   }
 
   if (!isUserAdmin) {

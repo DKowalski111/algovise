@@ -69,7 +69,7 @@ const Tutorials: React.FC = () => {
           className="d-flex d-xxl-flex flex-row flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 py-4 px-4 my-3"
           style={{
             borderStyle: "solid",
-            borderColor: "var(--bs-body-bg)", // Static color since no completion status
+            borderColor: "var(--bs-body-bg)",
             borderRadius: "1em",
             width: "80%",
             textDecoration: "none",

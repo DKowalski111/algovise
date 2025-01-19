@@ -37,7 +37,7 @@ const NewName: React.FC = () => {
       setToken(data.token);
       localStorage.setItem("name", data.name);
       setSuccess("Name updated successfully!");
-      navigate("/profile"); // Navigate to the profile page or any other page after successful update
+      navigate("/profile");
     } catch (error: any) {
       setError(error.message);
     }
@@ -79,7 +79,7 @@ const NewName: React.FC = () => {
                 type="button"
                 className="btn btn-secondary"
                 style={{ width: "48%" }}
-                onClick={() => navigate("/profile")} // Navigate back to profile
+                onClick={() => navigate("/profile")}
               >
                 Cancel
               </button>

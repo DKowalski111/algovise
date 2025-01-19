@@ -53,7 +53,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
       .force("charge", d3.forceManyBody().strength(-150))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    // Links
     const linkElements = svg
       .selectAll(".link")
       .data(edges)
@@ -64,7 +63,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
       .attr("stroke-width", 2)
       .attr("marker-end", directed ? "url(#arrow)" : null);
 
-    // **Add text for the edge weights**
     const edgeLabelElements = svg
       .selectAll(".edge-label")
       .data(edges)
@@ -76,7 +74,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
       .attr("dy", -5)
       .text((d) => d.weight);
 
-    // Nodes
     const nodeElements = svg
       .selectAll(".node")
       .data(nodes)
@@ -105,7 +102,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
           })
       );
 
-    // Node labels
     const nodeLabelElements = svg
       .selectAll(".label")
       .data(nodes)
@@ -117,7 +113,6 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ nodes, edges, weighte
       .attr("fill", "red")
       .text((d: any) => d.label);
 
-    // On every tick, update positions
     simulation.on("tick", () => {
       linkElements
         .attr("x1", (d: any) => d.source.x)

@@ -1,5 +1,5 @@
 export const getToken = () => {
-  return localStorage.getItem('token'); // Retrieve the token from localStorage
+  return localStorage.getItem('token');
 };
 
 export const getUserId = () => {
@@ -15,34 +15,33 @@ export const getUserEmail = () => {
 };
 
 export const setToken = (token: string) => {
-  localStorage.setItem('token', token); // Store the token in localStorage
+  localStorage.setItem('token', token);
 };
 
 export const removeToken = () => {
-  localStorage.removeItem('token'); // Remove token from localStorage when logging out
+  localStorage.removeItem('token');
 };
 
 export const checkToken = async (): Promise<boolean> => {
   const token = getToken();
-  if (!token) return false; // If token is null, it's invalid
+  if (!token) return false;
   
   try {
     const response = await fetch('http://localhost:8080/checkToken', {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain',  // Set the correct content type for plain text
+        'Content-Type': 'text/plain',
       },
-      body: token, // Send the token as plain text
+      body: token,
     });
 
-    // If the response is OK, the token is valid
     if (response.ok) {
       return true;
     } else {
-      return false; // Invalid token
+      return false;
     }
   } catch (error) {
     console.error('Error checking token:', error);
-    return false; // If the request fails, assume invalid token
+    return false;
   }
 };

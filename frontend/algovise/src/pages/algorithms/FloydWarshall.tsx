@@ -65,7 +65,6 @@ const FloydWarshall: React.FC = () => {
       const targetId = edge.target.id;
       const weight = edge.weight;
 
-      // Set initial distances
       distance[sourceId][targetId] = weight;
       nextNode[sourceId][targetId] = targetId;
 
@@ -76,7 +75,6 @@ const FloydWarshall: React.FC = () => {
     });
 
 
-    // Floyd-Warshall algorithm
     nodes.forEach((k: { id: string }) => {
       nodes.forEach((i: { id: string }) => {
         nodes.forEach((j: { id: string }) => {
@@ -89,13 +87,12 @@ const FloydWarshall: React.FC = () => {
     });
 
 
-    // Reconstruct the path from source to destination
     const reconstructPath = (startId: string, endId: string) => {
       const path = [];
       let current = startId;
       while (current !== endId) {
         if (current === null) {
-          return null; // No path
+          return null;
         }
         path.push(current);
         current = nextNode[current][endId];

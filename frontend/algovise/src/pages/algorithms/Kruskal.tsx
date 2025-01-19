@@ -22,7 +22,6 @@ const Kruskal: React.FC = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // Kruskal steps (feel free to adjust text as needed)
   const steps = [
     "",
     "Step 1: Initialize Kruskal.\n" +
@@ -46,7 +45,7 @@ const Kruskal: React.FC = () => {
   const nodes = location.state?.nodes || [];
   const edges = location.state?.edges || [];
   const weighted = location.state?.weighted || false;
-  const directed = location.state?.directed || false; // Kruskal is for undirected graphs typically.
+  const directed = location.state?.directed || false;
   const graphName = location.state?.graphName || "Unnamed Graph";
 
 
@@ -58,17 +57,11 @@ const Kruskal: React.FC = () => {
     setDestination(e.target.value);
   };
 
-  // -------------------------
-  // POPUP HELPER
-  // -------------------------
   function showPopup(message: string) {
     setPopupMessage(message);
     setIsPopupVisible(true);
   }
 
-  // -------------------------
-  // Utility: Build Edge List
-  // -------------------------
   function buildEdgeList() {
     const list: Edge[] = [];
     edges.forEach((edgeObj: any) => {
@@ -76,33 +69,25 @@ const Kruskal: React.FC = () => {
       const { id: tgt } = edgeObj.target;
       const w = edgeObj.weight ?? 1;
 
-      // For Kruskal, we treat as undirected, so just store one direction
-      // (If the graph is directed in the data, Kruskal might not fully apply, 
-      //  but we'll assume you're forcing it to be undirected or ignoring direction.)
       list.push({ sourceId: src, targetId: tgt, weight: w });
     });
 
-    // Sort by weight
     list.sort((a, b) => a.weight - b.weight);
     return list;
   }
 
-  // -------------------------
-  // Union-Find (Disjoint Set)
-  // -------------------------
   function makeSet(nodesArray: any[]) {
     const pMap = new Map<any, any>();
     const rMap = new Map<any, number>();
 
     for (let n of nodesArray) {
-      pMap.set(n.id, n.id); // parent of itself
-      rMap.set(n.id, 0);    // rank = 0
+      pMap.set(n.id, n.id);
+      rMap.set(n.id, 0);
     }
     return { pMap, rMap };
   }
 
   function findSet(pMap: Map<any, any>, x: any): any {
-    // Path compression
     if (pMap.get(x) !== x) {
       pMap.set(x, findSet(pMap, pMap.get(x)));
     }
@@ -119,7 +104,6 @@ const Kruskal: React.FC = () => {
     const rootB = findSet(pMap, b);
 
     if (rootA !== rootB) {
-      // union by rank
       const rankA = rMap.get(rootA) ?? 0;
       const rankB = rMap.get(rootB) ?? 0;
 
@@ -134,9 +118,6 @@ const Kruskal: React.FC = () => {
     }
   }
 
-  // -------------------------
-  // 1) Full Run Kruskal
-  // -------------------------
   const handleAlgorithmClick = () => {
     if (directed) {
       showPopup("Kruskal's algorithm requires an undirected graph. You have a directed graph selected.");
@@ -158,12 +139,10 @@ const Kruskal: React.FC = () => {
         mst.push(edge);
       }
 
-      // If we've added V-1 edges, MST is complete (assuming connected)
       if (mst.length === nodes.length - 1) break;
     }
 
     if (mst.length === nodes.length - 1) {
-      // we have an MST
       showPopup(`MST found with ${mst.length} edges.`);
     } else {
       showPopup(
@@ -172,16 +151,12 @@ const Kruskal: React.FC = () => {
     }
   };
 
-  // -------------------------
-  // 2) Step-by-Step
-  // -------------------------
   const initializeAlgorithm = () => {
     if (directed) {
       showPopup("Kruskal's algorithm typically requires an undirected graph.");
       return;
     }
 
-    // 1) Build edge list & union-find
     const eList = buildEdgeList();
     const { pMap, rMap } = makeSet(nodes);
 
@@ -192,7 +167,7 @@ const Kruskal: React.FC = () => {
     setInitialized(true);
     setFinished(false);
     setCurrentEdgeIndex(0);
-    setCurrentStepIndex(1); // Step 1: Initialize
+    setCurrentStepIndex(1);
   };
 
   const nextStep = () => {
@@ -205,44 +180,34 @@ const Kruskal: React.FC = () => {
       return;
     }
 
-    // If we've used all edges
     if (currentEdgeIndex >= edgesList.length) {
       setFinished(true);
-      setCurrentStepIndex(4); // Step 4: "MST complete or no more edges"
+      setCurrentStepIndex(4);
       showPopup(`No more edges to process. MST size = ${mstEdges.length}`);
       return;
     }
 
-    // pick the next smallest edge
     const edge = edgesList[currentEdgeIndex];
-    setCurrentStepIndex(2); // Step 2: "Pick smallest edge"
+    setCurrentStepIndex(2);
 
     const newParent = new Map(parent);
     const newRank = new Map(rank);
     const newMst = [...mstEdges];
 
-    // check if it forms a cycle
     const rootA = findSet(newParent, edge.sourceId);
     const rootB = findSet(newParent, edge.targetId);
 
     if (rootA !== rootB) {
-      // union them
       unionSets(newParent, newRank, rootA, rootB);
       newMst.push(edge);
-      setCurrentStepIndex(3); // Step 3: "Repeat picking edges"
-    } else {
-      // This edge is skipped (would form a cycle)
-      // We'll keep the step index at 2 or 3. It's a bit ambiguous,
-      // but let's stick with 2 to indicate we just tried picking an edge.
+      setCurrentStepIndex(3);
     }
 
-    // Update states
     setParent(newParent);
     setRank(newRank);
     setMstEdges(newMst);
     setCurrentEdgeIndex(currentEdgeIndex + 1);
 
-    // Check if MST is complete (V-1 edges)
     if (newMst.length === nodes.length - 1) {
       setFinished(true);
       setCurrentStepIndex(4);
@@ -250,9 +215,6 @@ const Kruskal: React.FC = () => {
     }
   };
 
-  // -------------------------
-  // RESET
-  // -------------------------
   const resetAlgorithm = () => {
     setEdgesList([]);
     setParent(new Map());
@@ -264,21 +226,16 @@ const Kruskal: React.FC = () => {
     setCurrentStepIndex(0);
   };
 
-  // -------------------------
-  // RENDER
-  // -------------------------
   return (
     <div
       className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill
                  justify-content-center align-items-center align-content-center flex-wrap
                  justify-content-xxl-center align-items-xxl-center"
     >
-      {/* Popup Overlay */}
       <div
         className={`popup-overlay ${isPopupVisible ? "visible" : ""}`}
         onClick={() => setIsPopupVisible(false)}
       />
-      {/* Popup Modal */}
       {isPopupVisible && (
         <div className="popup">
           <p>{popupMessage}</p>
@@ -288,7 +245,6 @@ const Kruskal: React.FC = () => {
         </div>
       )}
 
-      {/* Table with Graph Info */}
       <div className="table-responsive" style={{ background: 'var(--bs-body-color)' }}>
         <table className="table">
           <thead>
@@ -386,7 +342,6 @@ const Kruskal: React.FC = () => {
         </table>
       </div>
 
-      {/* Graph Visualizer */}
       <div
         className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center
                    align-items-center align-content-start flex-wrap justify-content-xxl-center
@@ -400,7 +355,6 @@ const Kruskal: React.FC = () => {
         Kruskal's Algorithm - Minimum Spanning Tree
       </h1>
 
-      {/* Optional: If you want to keep the Source/Dest inputs for a consistent UI, otherwise you can remove them */}
       <div className="d-flex flex-row justify-content-center align-items-center flex-wrap my-4">
         <div className="d-flex flex-column justify-content-center align-items-center my-3 mx-3">
           <p className="text-center" style={{ color: 'var(--bs-light)' }}>Source</p>
@@ -422,7 +376,6 @@ const Kruskal: React.FC = () => {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="d-flex flex-row justify-content-center align-items-center">
         <button className="btn btn-primary mx-4 my-3" type="button" onClick={handleAlgorithmClick}>
           Perform Algorithm
@@ -435,7 +388,6 @@ const Kruskal: React.FC = () => {
         </button>
       </div>
 
-      {/* Step Descriptions */}
       <div className="mt-4">
         {steps.map((step, index) => (
           <p
@@ -452,7 +404,6 @@ const Kruskal: React.FC = () => {
         ))}
       </div>
 
-      {/* Optional: Display MST edges so far (step-by-step) */}
       <div style={{ color: 'var(--bs-light)', marginTop: '1rem' }}>
         <h5>MST Edges Chosen So Far:</h5>
         <ul>

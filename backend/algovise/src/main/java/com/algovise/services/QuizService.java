@@ -39,7 +39,6 @@ public class QuizService {
         quiz.setTitle(title);
         quiz.setFilePath(filePath);
 
-        System.out.println("Saving quiz - " + quiz);
         quizRepository.save(quiz);
     }
 

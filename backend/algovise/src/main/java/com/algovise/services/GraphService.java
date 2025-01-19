@@ -1,5 +1,6 @@
 package com.algovise.services;
 
+import com.algovise.configs.UserAuthenticationProvider;
 import com.algovise.dtos.EdgeDto;
 import com.algovise.entities.Edge;
 import com.algovise.entities.Graph;
@@ -7,15 +8,14 @@ import com.algovise.entities.Node;
 import com.algovise.repositories.EdgeRepository;
 import com.algovise.repositories.GraphRepository;
 import com.algovise.repositories.NodeRepository;
+import com.algovise.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.stereotype.Service;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -27,8 +27,12 @@ public class GraphService {
 
     private EdgeRepository edgeRepository;
 
-    public List<Graph> getAllGraphs() {
-        return graphRepository.findAll();
+    private UserAuthenticationProvider userAuthenticationProvider;
+
+    private UserRepository userRepository;
+
+    public List<Graph> getAllGraphs(String token) {
+        return graphRepository.findByUserId(userAuthenticationProvider.getUserIdByToken(token));
     }
 
     public Graph getGraphById(Long id) {
@@ -36,10 +40,20 @@ public class GraphService {
                 .orElseThrow(() -> new RuntimeException("Graph not found with id: " + id));
     }
 
-    public Graph createGraph(Graph graph) {
+    public Graph createGraph(Graph graph, String token) throws IllegalAccessException {
+        Long userId = userAuthenticationProvider.getUserIdByToken(token);
         if (graph.getId() != null) {
-            return updateExistingGraph(graph);
+            if(Objects.equals(graph.getUser().getId(), userId))
+            {
+                return updateExistingGraph(graph);
+            }
+            else
+            {
+                throw new IllegalAccessException("Trying to modify graph of someone else!");
+            }
+
         } else {
+            graph.setUser(userRepository.findById(userId).orElseThrow());
             return saveNewGraph(graph);
         }
     }
@@ -66,10 +80,14 @@ public class GraphService {
         existingGraph.setWeighted(newGraph.isWeighted());
     }
 
-    public Node addNodeToGraph(Long graphId, Node node) {
+    public Node addNodeToGraph(Long graphId, Node node, String token) throws IllegalAccessException {
+        Long userId = userAuthenticationProvider.getUserIdByToken(token);
         Graph graph = getGraphById(graphId);
+        if(!graph.getUser().getId().equals(userId))
+        {
+            throw new IllegalAccessException("Trying to modify graph of someone else!");
+        }
         node.setGraph(graph);
-
 
         if (node.getId() != null && (node.getId() > 0)) {
             return updateExistingNode(node);
@@ -158,8 +176,13 @@ public class GraphService {
                 .orElseThrow(() -> new RuntimeException("Node not found with id: " + nodeId));
     }
 
-    public Graph updateGraph(Long id, Graph updatedGraph) {
+    public Graph updateGraph(Long id, Graph updatedGraph, String token) throws IllegalAccessException {
         Graph graph = getGraphById(id);
+        Long userId = userAuthenticationProvider.getUserIdByToken(token);
+        if(!graph.getUser().getId().equals(userId))
+        {
+            throw new IllegalAccessException("Trying to modify graph of someone else!");
+        }
         graph.setDirected(updatedGraph.isDirected());
         graph.setWeighted(updatedGraph.isWeighted());
         graph.setNodes(updatedGraph.getNodes());
@@ -167,7 +190,13 @@ public class GraphService {
         return graphRepository.save(graph);
     }
 
-    public void deleteGraph(Long id) {
+    public void deleteGraph(Long id, String token) throws IllegalAccessException {
+        Long userId = userAuthenticationProvider.getUserIdByToken(token);
+        Graph graph = graphRepository.findById(id).orElseThrow();
+        if(!graph.getUser().getId().equals(userId))
+        {
+            throw new IllegalAccessException("Trying to modify graph of someone else!");
+        }
         graphRepository.deleteById(id);
     }
 

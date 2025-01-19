@@ -2,31 +2,28 @@ import React, { useState, useEffect } from "react";
 import { getUserEmail, getUserName } from "../../utils/AuthUtils";
 import { useNavigate } from "react-router-dom";
 
-// Define types for the user's profile data
 interface UserProfile {
   name: string;
   email: string;
 }
 
 const Profile: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null); // State for user profile data
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Loading state for the profile data
-  const [error, setError] = useState<string | null>(null); // Error state for handling API failures
-  const navigate = useNavigate(); // React Router's navigation hook
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Fetch user profile data from an API or localStorage (simulated here)
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Simulate an API call for name and email
-        const name = getUserName(); // Fetch user name
-        const email = getUserEmail(); // Fetch user email
+        const name = getUserName();
+        const email = getUserEmail();
 
         if (!name || !email) {
           throw new Error("Failed to fetch profile data");
         }
 
-        setProfile({ name, email }); // Set profile data
+        setProfile({ name, email });
       } catch (err) {
         setError("Failed to load profile.");
       } finally {
@@ -37,12 +34,10 @@ const Profile: React.FC = () => {
     fetchProfile();
   }, []);
 
-  // If loading, show a loading message
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  // If there's an error, display the error message
   if (error) {
     return <div>{error}</div>;
   }

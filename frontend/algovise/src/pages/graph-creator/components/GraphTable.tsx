@@ -8,7 +8,7 @@ interface TableProps {
 }
 
 const GraphTable: React.FC<TableProps> = ({ headers, rows, onRowsUpdate, onDeleteRow }) => {
-  const hasActionsColumn = headers.includes("Actions"); // Check for 'Actions'
+  const hasActionsColumn = headers.includes("Actions");
 
   const handleCellChange = (rowIndex: number, cellIndex: number, newValue: string) => {
     const updatedRows = [...rows];

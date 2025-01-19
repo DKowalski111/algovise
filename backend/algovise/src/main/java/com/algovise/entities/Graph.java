@@ -25,22 +25,26 @@ public class Graph {
     @OneToMany(mappedBy = "graph", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Edge> edges = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Graph graph = (Graph) o;
-        return id != null && id.equals(graph.id); // Only compare IDs
+        return id != null && id.equals(graph.id);
     }
 
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0; // Use ID for hashCode
+        return id != null ? id.hashCode() : 0;
     }
 
     @Override
     public String toString()
     {
-        return "Graph id: " + id + ", name: " + name + ", directed: " + directed + ", weighted: " + weighted;
+        return "Graph id: " + id + ", name: " + name + ", directed: " + directed + ", weighted: " + weighted + ", User: " + user;
     }
 }

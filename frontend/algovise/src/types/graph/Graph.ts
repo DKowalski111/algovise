@@ -16,4 +16,5 @@ export interface Graph {
   weighted: boolean;
   nodes: Node[];
   edges: Edge[];
+  userId: number;
 }

@@ -38,7 +38,6 @@ public class TutorialService {
         tutorial.setTitle(title);
         tutorial.setFilePath(filePath);
 
-        System.out.println("Saving Tutorial - " + tutorial);
         tutorialRepository.save(tutorial);
     }
     public String getTutorialFilePath(Long tutorialId) {

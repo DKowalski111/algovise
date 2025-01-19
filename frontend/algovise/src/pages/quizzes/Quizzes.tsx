@@ -67,7 +67,7 @@ const Quizzes: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (quizzes.length === 0) return; // Wait until quizzes are loaded
+    if (quizzes.length === 0) return;
 
     const fetchCompletionStatus = async () => {
       const userId = getUserId();

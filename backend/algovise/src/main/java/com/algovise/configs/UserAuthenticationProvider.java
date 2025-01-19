@@ -72,4 +72,18 @@ public class UserAuthenticationProvider {
 
         return userDto.getRole().equals("ADMIN");
     }
+
+    public Long getUserIdByToken(String token)
+    {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+
+        JWTVerifier verifier = JWT.require(algorithm)
+                .build();
+
+        DecodedJWT decoded = verifier.verify(token);
+
+        UserDto userDto = userService.findByName(decoded.getSubject());
+
+        return userDto.getId();
+    }
 }

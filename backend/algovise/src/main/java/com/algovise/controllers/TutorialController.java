@@ -43,12 +43,10 @@ public class TutorialController {
                                           @RequestParam("token") String token) {
         if(!userAuthenticationProvider.isUserAdmin(token))
         {
-            System.out.println("Not permitted");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not permitted to add new tutorial.");
         }
 
         if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".md")) {
-            System.out.println("Not md");
             return ResponseEntity.badRequest().body("Only MD files are allowed.");
         }
 
@@ -57,8 +55,6 @@ public class TutorialController {
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
-
-            System.out.println("Directory created - " + directory);
 
             String fileName = file.getOriginalFilename();
             Path filePath = directory.resolve(fileName);
