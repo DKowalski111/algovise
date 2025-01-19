@@ -3,7 +3,6 @@ package com.algovise.controllers;
 import com.algovise.configs.UserAuthenticationProvider;
 import com.algovise.dtos.TutorialDto;
 import com.algovise.services.TutorialService;
-import com.algovise.services.UserCompletedQuizzesService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

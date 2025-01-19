@@ -148,6 +148,6 @@ public class GraphController {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid Authorization header");
         }
-        return authorizationHeader.substring(7); // Remove "Bearer " prefix
+        return authorizationHeader.substring(7);
     }
 }

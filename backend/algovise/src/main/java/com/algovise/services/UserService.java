@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,36 +33,44 @@ public class UserService
 	private final UserMapper userMapper;
 	private final PasswordEncoder passwordEncoder;
 
-	public UserDto login(final CredentialsDto credentialsDto)
-	{
-		User user = userRepository.findByName(credentialsDto.getName())
-				.orElseThrow(() -> new AppException(USER_NOT_FOUND_ERR_MSG_BY_NAME, HttpStatus.NOT_FOUND));
+    public UserDto login(final CredentialsDto credentialsDto) {
+        try {
+            User user = userRepository.findByName(credentialsDto.getName())
+                    .orElseThrow(() -> new AppException(USER_NOT_FOUND_ERR_MSG_BY_NAME, HttpStatus.NOT_FOUND));
 
-		if(passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())){
-			return userMapper.toUserDto(user);
-		}
+            if (passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())) {
+                return userMapper.toUserDto(user);
+            }
 
-		throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
-	}
+            throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
+        } finally {
+            Arrays.fill(credentialsDto.getPassword(), '\0');
+        }
+    }
 
-	public UserDto register(final SignUpDto signUpDto)
-	{
-		Optional<User> optionalUser = userRepository.findByName(signUpDto.getName());
+    public UserDto register(final SignUpDto signUpDto) {
+        try {
+            Optional<User> optionalUser = userRepository.findByName(signUpDto.getName());
 
-		if(optionalUser.isPresent()){
-			throw new AppException("User already exists", HttpStatus.BAD_REQUEST);
-		}
+            if (optionalUser.isPresent()) {
+                throw new AppException("User already exists", HttpStatus.BAD_REQUEST);
+            }
 
-		User user = userMapper.signUpToUser(signUpDto);
-		user.setPassword(passwordEncoder.encode(CharBuffer.wrap(signUpDto.getPassword())));
-		user.setRole("USER");
+            User user = userMapper.signUpToUser(signUpDto);
+            user.setPassword(passwordEncoder.encode(CharBuffer.wrap(signUpDto.getPassword())));
+            Arrays.fill(signUpDto.getPassword(), '\0');
+            user.setRole("USER");
 
-		User savedUser = userRepository.save(user);
+            User savedUser = userRepository.save(user);
 
-		return userMapper.toUserDto(savedUser);
-	}
+            return userMapper.toUserDto(savedUser);
+        } finally {
+            Arrays.fill(signUpDto.getPassword(), '\0');
+        }
+    }
 
-	public UserDto findByName(final String name) {
+
+    public UserDto findByName(final String name) {
 		User user = userRepository.findByName(name)
 				.orElseThrow(() -> new AppException(USER_NOT_FOUND_ERR_MSG_BY_NAME, HttpStatus.NOT_FOUND));
 		return userMapper.toUserDto(user);
