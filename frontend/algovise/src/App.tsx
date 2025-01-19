@@ -14,12 +14,6 @@ import BasicGraphAlgorithms from './pages/tutorials/basic-graph-algorithms/Basic
 import ClassicProblems from './pages/tutorials/classic-problems/ClassicProblems';
 import RealWorldGraphAlgorithms from './pages/tutorials/real-world-graph-algorithms/RealWorldGraphAlgorithms';
 import Quizzes from './pages/quizzes/Quizzes';
-import QuizAdvancedGraphAlgorithms from './pages/quizzes/advanced-graph-algorithms/QuizAdvancedGraphAlgorithms';
-import QuizAlgorithmsForDirectedGraphs from './pages/quizzes/algorithms-for-directed-graphs/QuizAlgorithmsForDirectedGraphs';
-import QuizBasicGraphAlgorithms from './pages/quizzes/basic-graph-algorithms/QuizBasicGraphAlgorithms';
-import QuizClassicProblems from './pages/quizzes/classic-problems/QuizClassicProblems';
-import QuizFundamentalsOfGraphTheory from './pages/quizzes/fundamentals-of-graph-theory/QuizFundamentalsOfGraphTheory';
-import QuizRealWorldGraphAlgorithms from './pages/quizzes/real-world-graph-algorithms/QuizRealWorldGraphAlgorithms';
 import Profile from './pages/profile/Profile';
 import NewName from './pages/profile/NewName';
 import NewEmail from './pages/profile/NewEmail';
@@ -35,6 +29,8 @@ import FloydWarshall from './pages/algorithms/FloydWarshall';
 import AStar from './pages/algorithms/AStar';
 import Prim from './pages/algorithms/Prim';
 import SavedGraphs from './pages/savedGraphs/SavedGraphs';
+import QuizCreator from './pages/quizzes/QuizCreator';
+import QuizViewer from './pages/quizzes/QuizViewer';
 
 const RouteElement = ({ element }: any) => {
   useEffect(() => {
@@ -62,12 +58,7 @@ function App() {
           <Route path="/tutorials/classic-problems" element={<ClassicProblems />} />
           <Route path="/tutorials/real-world-graph-algorithms" element={<RealWorldGraphAlgorithms />} />
           <Route path="/quizzes" element={<Quizzes />} />
-          <Route path="/quizzes/advanced-graph-algorithms" element={<QuizAdvancedGraphAlgorithms />} />
-          <Route path="/quizzes/algorithms-for-directed-graphs" element={<QuizAlgorithmsForDirectedGraphs />} />
-          <Route path="/quizzes/basic-graph-algorithms" element={<QuizBasicGraphAlgorithms />} />
-          <Route path="/quizzes/classic-problems" element={<QuizClassicProblems />} />
-          <Route path="/quizzes/fundamentals-of-graph-theory" element={<QuizFundamentalsOfGraphTheory />} />
-          <Route path="/quizzes/real-world-graph-algorithms" element={<QuizRealWorldGraphAlgorithms />} />
+          <Route path="/quizzes/:quizId" element={<QuizViewer />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/profile/update-name' element={<NewName />} />
           <Route path='/profile/update-email' element={<NewEmail />} />
@@ -83,6 +74,7 @@ function App() {
           <Route path='/a-star-algorithm' element={<AStar />} />
           <Route path='/prim-algorithm' element={<Prim />} />
           <Route path='/saved-graphs' element={<SavedGraphs />} />
+          <Route path='/quiz-creator' element={<QuizCreator />} />
         </Route>
       </Routes>
     </div>

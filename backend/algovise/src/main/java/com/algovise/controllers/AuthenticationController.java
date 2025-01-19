@@ -7,6 +7,7 @@ import com.algovise.dtos.UserDto;
 import com.algovise.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,12 @@ public class AuthenticationController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token format");
         }
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<Boolean> isUserAdmin(@RequestBody String token)
+    {
+        return ResponseEntity.ok().body(userAuthenticationProvider.isUserAdmin(token));
     }
 
 }

@@ -25,7 +25,6 @@ const Prim: React.FC = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // Steps for Prim’s Algorithm
   const steps = [
     "",
     "Step 1: Initialize Prim.\n" +

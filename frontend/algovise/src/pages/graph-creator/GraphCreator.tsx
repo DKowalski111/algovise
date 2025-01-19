@@ -50,9 +50,10 @@ const GraphCreator: React.FC = () => {
 
   const saveButtonClicked = async () => {
     try {
-      await saveGraph();
-      const updatedNodes = await saveNodes();
-      await saveEdges(updatedNodes);
+      const savedGraph = await saveGraph();
+      console.log(savedGraph);
+      const updatedNodes = await saveNodes(savedGraph?.id);
+      await saveEdges(updatedNodes, savedGraph?.id);
     } catch (error) {
       console.error("Error saving data:", error);
     }
@@ -66,7 +67,6 @@ const GraphCreator: React.FC = () => {
       directed: graphBasicsTableRow[0][1].toLowerCase() === "yes" || graphBasicsTableRow[0][1].toLowerCase() === "true",
       weighted: graphBasicsTableRow[0][2].toLowerCase() === "yes" || graphBasicsTableRow[0][2].toLowerCase() === "true",
     };
-
 
     try {
       const response = await fetch("http://localhost:8080/graphs", {
@@ -82,19 +82,18 @@ const GraphCreator: React.FC = () => {
         throw new Error("Failed to save graph");
       }
 
-      setFetchedGraph(await response.json());
-      console.log("Save graph finished")
+      const data = await response.json();
+      setFetchedGraph(data);
+      return data;
     } catch (error) { }
   };
 
-  const saveNodes = async () => {
-    if (!fetchedGraph) return;
-
+  const saveNodes = async (graphId: number) => {
     const token = getToken();
     const nodeData = nodes.map((node) => ({ id: node.id ?? null, label: node.label }));
 
     try {
-      const response = await fetch(`http://localhost:8080/graphs/${fetchedGraph.id}/nodes`, {
+      const response = await fetch(`http://localhost:8080/graphs/${graphId}/nodes`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -113,9 +112,7 @@ const GraphCreator: React.FC = () => {
     } catch (error) { }
   };
 
-  const saveEdges = async (updatedNodes: { id: number; label: string }[]) => {
-
-    if (!fetchedGraph) return;
+  const saveEdges = async (updatedNodes: { id: number; label: string }[], graphId: number) => {
 
     const token = getToken();
 
@@ -139,7 +136,7 @@ const GraphCreator: React.FC = () => {
     });
 
     try {
-      const response = await fetch(`http://localhost:8080/graphs/${fetchedGraph.id}/edges`, {
+      const response = await fetch(`http://localhost:8080/graphs/${graphId}/edges`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,7 +149,7 @@ const GraphCreator: React.FC = () => {
         throw new Error("Failed to save edges");
       }
 
-      fetchGraphData(fetchedGraph.id)
+      fetchGraphData(graphId)
     } catch (error) { }
   };
 
@@ -228,7 +225,9 @@ const GraphCreator: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchGraphData(location.state?.graphId);
+    if (location.state?.graphId) {
+      fetchGraphData(location.state?.graphId);
+    }
   }, []);
 
   useEffect(() => {
@@ -280,10 +279,6 @@ const GraphCreator: React.FC = () => {
     setNodes(filteredNodes);
     setEdges(newEdges);
   }, [rows]);
-
-
-
-
 
   return (
     <div className="d-flex flex-column justify-content-center align-items-center">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 
 interface Answer {
   text: string;
@@ -34,7 +35,8 @@ const getToken = (): string | null => {
   return localStorage.getItem("token");
 };
 
-const QuizClassicProblems: React.FC = () => {
+const QuizViewer: React.FC = () => {
+  const { quizId } = useParams<{ quizId: string }>();
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Map<number, number | null>>(new Map());
   const [submitted, setSubmitted] = useState(false);
@@ -43,20 +45,38 @@ const QuizClassicProblems: React.FC = () => {
   const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
 
   useEffect(() => {
-    fetch("/quizzes/classic-problems/classic-problems.json")
-      .then((response) => response.json())
-      .then((data) => {
-        const shuffledData = {
-          ...data,
-          questions: data.questions.map((question: { answers: any[] }) => ({
-            ...question,
-            answers: shuffleArray(question.answers),
-          })),
-        };
-        setQuizData(shuffledData);
-      })
-      .catch((error) => console.error("Error loading quiz data:", error));
-  }, []);
+    const fetchQuizData = async () => {
+      const token = getToken();
+
+      try {
+        const response = await fetch(`http://localhost:8080/quizzes/file/${quizId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data: QuizData = await response.json();
+          const shuffledData = {
+            ...data,
+            questions: data.questions.map((question) => ({
+              ...question,
+              answers: shuffleArray(question.answers),
+            })),
+          };
+          setQuizData(shuffledData);
+        } else {
+          console.error(`Failed to fetch quiz data for quizId: ${quizId}`);
+        }
+      } catch (error) {
+        console.error("Error fetching quiz data:", error);
+      }
+    };
+
+    fetchQuizData();
+  }, [quizId]);
 
   const handleAnswerClick = (questionId: number, answerIndex: number) => {
     if (submitted) return;
@@ -78,7 +98,6 @@ const QuizClassicProblems: React.FC = () => {
 
     const newSubmittedAnswers = new Map<number, boolean>();
     let localCorrectAnswersCount = 0;
-    setCorrectAnswersCount(0);
 
     quizData.questions.forEach((question) => {
       const selectedAnswerIndex = selectedAnswers.get(question.id);
@@ -106,7 +125,7 @@ const QuizClassicProblems: React.FC = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/completed-quizzes?userId=${userId}&quizId=4`,
+          `http://localhost:8080/completed-quizzes?userId=${userId}&quizId=${quizId}`,
           {
             method: "POST",
             headers: {
@@ -246,4 +265,4 @@ const QuizClassicProblems: React.FC = () => {
   );
 };
 
-export default QuizClassicProblems;
+export default QuizViewer;

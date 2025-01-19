@@ -33,25 +33,30 @@ public class GraphController {
     @PostMapping
     public ResponseEntity<Graph> createGraph(@RequestBody Graph graph) {
         Graph createdGraph = graphService.createGraph(graph);
+        System.out.println(createdGraph);
         return ResponseEntity.ok(createdGraph);
     }
 
     @PostMapping("/{graphId}/nodes")
     public ResponseEntity<List<Node>> addNodeToGraph(@PathVariable Long graphId, @RequestBody Node[] nodes) {
+        System.out.println("1");
         List<Node> createdNodes = new ArrayList<>();
         for(Node node : nodes) {
             createdNodes.add(graphService.addNodeToGraph(graphId, node));
         }
+        System.out.println("2");
         return ResponseEntity.ok(createdNodes);
     }
 
     @PostMapping("/{graphId}/edges")
     public ResponseEntity<List<Edge>> addEdgeToGraph(@PathVariable Long graphId, @RequestBody EdgeDto[] edgeDtos) {
+        System.out.println("3");
         removeNotExistingNodes(graphId, edgeDtos);
         List<Edge> createdEdges = new ArrayList<>();
         for(EdgeDto edgeDto : edgeDtos) {
             createdEdges.add(graphService.addEdgeToGraph(graphId, edgeDto));
         }
+        System.out.println("4");
         return ResponseEntity.ok(createdEdges);
     }
 

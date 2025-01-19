@@ -59,5 +59,17 @@ public class UserAuthenticationProvider {
         return new UsernamePasswordAuthenticationToken(userDto, null, Collections.emptyList());
     }
 
+    public boolean isUserAdmin(final String token)
+    {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
 
+        JWTVerifier verifier = JWT.require(algorithm)
+                .build();
+
+        DecodedJWT decoded = verifier.verify(token);
+
+        UserDto userDto = userService.findByName(decoded.getSubject());
+
+        return userDto.getRole().equals("ADMIN");
+    }
 }

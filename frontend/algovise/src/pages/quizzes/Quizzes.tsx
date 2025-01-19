@@ -1,21 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getToken } from "../../utils/AuthUtils";
 
 interface Quiz {
   id: number;
   title: string;
-  path: string;
 }
-
-const quizzes: Quiz[] = [
-  { id: 1, title: "Fundamentals of Graph Theory", path: "/quizzes/fundamentals-of-graph-theory" },
-  { id: 2, title: "Basic Graph Algorithms", path: "/quizzes/basic-graph-algorithms" },
-  { id: 3, title: "Advanced Graph Algorithms", path: "/quizzes/advanced-graph-algorithms" },
-  { id: 4, title: "Classic Problems in Graph Theory", path: "/quizzes/classic-problems" },
-  { id: 5, title: "Algorithms for Directed Graphs", path: "/quizzes/algorithms-for-directed-graphs" },
-  { id: 6, title: "Real-World Examples of Graph Algorithms", path: "/quizzes/real-world-graph-algorithms" },
-];
 
 const getUserId = (): number | null => {
   const userId = localStorage.getItem("id");
@@ -23,9 +13,62 @@ const getUserId = (): number | null => {
 };
 
 const Quizzes: React.FC = () => {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [completedQuizzes, setCompletedQuizzes] = useState<{ [key: number]: boolean }>({});
+  const [isUserAdmin, setIsUserAdmin] = useState<boolean | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchQuizzes = async () => {
+      const token = getToken();
+
+      try {
+        const response = await fetch("http://localhost:8080/quizzes/list", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data: Quiz[] = await response.json();
+          setQuizzes(data);
+        } else {
+          console.error("Failed to fetch quizzes.");
+        }
+      } catch (error) {
+        console.error("Error fetching quizzes:", error);
+      }
+    };
+
+    const fetchAdminStatus = async () => {
+      const token = getToken();
+      try {
+        const response = await fetch("http://localhost:8080/admin", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "text/plain",
+          },
+          body: token,
+        });
+
+        if (response.ok) {
+          setIsUserAdmin(await response.json());
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+      }
+    };
+
+    fetchQuizzes();
+    fetchAdminStatus();
+  }, []);
+
+  useEffect(() => {
+    if (quizzes.length === 0) return; // Wait until quizzes are loaded
+
     const fetchCompletionStatus = async () => {
       const userId = getUserId();
       const token = getToken();
@@ -52,30 +95,27 @@ const Quizzes: React.FC = () => {
             const isCompleted = await response.json();
             completionStatus[quiz.id] = isCompleted;
           } else {
-            console.error(
-              `Failed to fetch completion status for quiz ${quiz.id}`
-            );
+            console.error(`Failed to fetch completion status for quiz ${quiz.id}`);
           }
         } catch (error) {
-          console.error(
-            `Error fetching completion status for quiz ${quiz.id}:`,
-            error
-          );
+          console.error(`Error fetching completion status for quiz ${quiz.id}:`, error);
         }
       }
+
+      console.log(completionStatus);
 
       setCompletedQuizzes(completionStatus);
     };
 
     fetchCompletionStatus();
-  }, []);
+  }, [quizzes]);
 
   return (
     <div className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 flex-fill justify-content-center align-items-center flex-wrap justify-content-xxl-center align-items-xxl-center">
-      {quizzes.map((quiz) => (
+      {quizzes.map((quiz, index) => (
         <Link
           key={quiz.id}
-          to={quiz.path}
+          to={`/quizzes/${quiz.id}`}
           className="d-flex d-xxl-flex flex-row flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 py-4 px-4 my-3"
           style={{
             borderStyle: "solid",
@@ -89,10 +129,19 @@ const Quizzes: React.FC = () => {
             className="my-0"
             style={{ color: "var(--bs-body-bg)", textAlign: "center" }}
           >
-            {quiz.id}. {quiz.title}
+            {index + 1}. {quiz.title}
           </h1>
         </Link>
       ))}
+      {isUserAdmin && (
+        <button
+          className="btn btn-primary mx-4 my-3"
+          type="button"
+          onClick={() => navigate("/quiz-creator")}
+        >
+          Add new Quiz
+        </button>
+      )}
     </div>
   );
 };
