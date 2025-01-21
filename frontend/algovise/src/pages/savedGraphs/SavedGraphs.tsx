@@ -211,10 +211,13 @@ const SavedGraphs: React.FC = () => {
       <a
         className="btn btn-primary ms-md-2 my-5"
         role="button"
-        href="#"
+        href="/create-graph"
         style={{
           background: "var(--bs-orange)",
           borderStyle: "none",
+        }}
+        onClick={() => {
+          localStorage.removeItem("graphId");
         }}
       >
         New Graph

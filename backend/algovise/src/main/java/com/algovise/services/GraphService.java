@@ -35,14 +35,24 @@ public class GraphService {
         return graphRepository.findByUserId(userAuthenticationProvider.getUserIdByToken(token));
     }
 
-    public Graph getGraphById(Long id) {
-        return graphRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Graph not found with id: " + id));
+    public Graph getGraphById(Long id, String token) throws IllegalAccessException {
+        Long userId = userAuthenticationProvider.getUserIdByToken(token);
+        Graph graph = graphRepository.findById(id).orElseThrow();
+        if(!graph.getUser().getId().equals(userId))
+        {
+            throw new IllegalAccessException("Trying to modify graph of someone else!");
+        }
+
+        return graph;
     }
 
     public Graph createGraph(Graph graph, String token) throws IllegalAccessException {
         Long userId = userAuthenticationProvider.getUserIdByToken(token);
         if (graph.getId() != null) {
+            if(graph.getUser() == null)
+            {
+                graph.setUser(userRepository.findById(userId).orElseThrow());
+            }
             if(Objects.equals(graph.getUser().getId(), userId))
             {
                 return updateExistingGraph(graph);
@@ -82,7 +92,7 @@ public class GraphService {
 
     public Node addNodeToGraph(Long graphId, Node node, String token) throws IllegalAccessException {
         Long userId = userAuthenticationProvider.getUserIdByToken(token);
-        Graph graph = getGraphById(graphId);
+        Graph graph = getGraphById(graphId, token);
         if(!graph.getUser().getId().equals(userId))
         {
             throw new IllegalAccessException("Trying to modify graph of someone else!");
@@ -111,7 +121,7 @@ public class GraphService {
         {
             if(node.getLabel().equals(existingNode.getLabel()))
             {
-                throw new KeyAlreadyExistsException("The node: " + node + " already exists!");
+                return existingNode;
             }
         }
         Node savedNode = nodeRepository.save(node);
@@ -124,8 +134,12 @@ public class GraphService {
         existingNode.setLabel(newNode.getLabel());
     }
 
-    public Edge addEdgeToGraph(Long graphId, EdgeDto edgeDto) {
-        Graph graph = getGraphById(graphId);
+    public Edge addEdgeToGraph(Long graphId, EdgeDto edgeDto, String token) throws IllegalAccessException {
+        Graph graph = getGraphById(graphId, token);
+        if(graph.isWeighted())
+        {
+            edgeDto.setWeight(0.0);
+        }
 
         if (edgeDto.getId() > 0) {
             return updateExistingEdge(edgeDto);
@@ -177,7 +191,7 @@ public class GraphService {
     }
 
     public Graph updateGraph(Long id, Graph updatedGraph, String token) throws IllegalAccessException {
-        Graph graph = getGraphById(id);
+        Graph graph = getGraphById(id, token);
         Long userId = userAuthenticationProvider.getUserIdByToken(token);
         if(!graph.getUser().getId().equals(userId))
         {

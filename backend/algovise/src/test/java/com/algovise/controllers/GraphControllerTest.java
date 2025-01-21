@@ -69,14 +69,14 @@ class GraphControllerTest {
         graph.setId(1L);
         graph.setName("Test Graph");
 
-        when(graphService.getGraphById(1L)).thenReturn(graph);
+        when(graphService.getGraphById(1L, "dummy-token")).thenReturn(graph);
 
         mockMvc.perform(get("/graphs/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Test Graph"));
 
-        verify(graphService).getGraphById(1L);
+        verify(graphService).getGraphById(1L, "dummy-token");
     }
 
     @Test
@@ -159,7 +159,7 @@ class GraphControllerTest {
 
         when(userAuthenticationProvider.getUserIdByToken("dummy-token")).thenReturn(1L);
         when(graphService.findGraphById(1L)).thenReturn(Optional.of(graph));
-        when(graphService.addEdgeToGraph(eq(1L), any(EdgeDto.class)))
+        when(graphService.addEdgeToGraph(eq(1L), any(EdgeDto.class), "dummy-token"))
                 .thenReturn(edge1)
                 .thenReturn(edge2);
 
@@ -173,7 +173,7 @@ class GraphControllerTest {
                 .andExpect(jsonPath("$[1].id").value(2L))
                 .andExpect(jsonPath("$[1].weight").value(15.0));
 
-        verify(graphService, times(2)).addEdgeToGraph(eq(1L), any(EdgeDto.class));
+        verify(graphService, times(2)).addEdgeToGraph(eq(1L), any(EdgeDto.class), "dummy-token");
         verify(graphService).findGraphById(1L);
         verify(userAuthenticationProvider).getUserIdByToken("dummy-token");
     }

@@ -85,6 +85,9 @@ const Dashboard: React.FC = () => {
             width: "40%",
           }}
           className="mx-3 my-5"
+          onClick={() => {
+            localStorage.removeItem("graphId");
+          }}
         >
           <div
             className="d-flex d-xxl-flex flex-column flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center py-4 px-4"

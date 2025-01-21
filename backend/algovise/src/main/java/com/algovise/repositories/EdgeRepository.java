@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 public interface EdgeRepository extends JpaRepository<Edge, Long> {
 
     @Modifying
-    @Transactional
     @Query("DELETE FROM Edge e WHERE e.id = :id")
     void deleteById(@Param("id") Long id);
 }

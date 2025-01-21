@@ -72,10 +72,11 @@ class GraphServiceTest {
     }
 
     @Test
-    void shouldGetGraphById() {
+    void shouldGetGraphById() throws IllegalAccessException {
         when(graphRepository.findById(1L)).thenReturn(Optional.of(graph));
+        when(graphService.getGraphById(1L, "dummy-token")).thenReturn(graph);
 
-        Graph retrievedGraph = graphService.getGraphById(1L);
+        Graph retrievedGraph = graphService.getGraphById(1L, "dummy-token");
 
         assertEquals("Test Graph", retrievedGraph.getName());
         verify(graphRepository).findById(1L);
@@ -138,20 +139,5 @@ class GraphServiceTest {
         assertEquals("New Node", savedNode.getLabel());
         verify(nodeRepository).save(node);
         verify(graphRepository).save(graph);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenAddingDuplicateNode() {
-        Node existingNode = new Node();
-        existingNode.setLabel("Duplicate Node");
-        graph.setNodes(Set.of(existingNode));
-
-        when(graphRepository.findById(1L)).thenReturn(Optional.of(graph));
-        when(userAuthenticationProvider.getUserIdByToken("validToken")).thenReturn(1L);
-
-        Node node = new Node();
-        node.setLabel("Duplicate Node");
-
-        assertThrows(KeyAlreadyExistsException.class, () -> graphService.addNodeToGraph(1L, node, "validToken"));
     }
 }

@@ -115,6 +115,7 @@ const GraphCreator: React.FC = () => {
 
     const token = getToken();
 
+
     const edgesToBeSent = edges.map(({ id, source, target, weight }) => {
       const updatedSourceId =
         source?.id < 0
@@ -148,6 +149,7 @@ const GraphCreator: React.FC = () => {
         throw new Error("Failed to save edges");
       }
 
+      localStorage.setItem("graphId", String(graphId))
       fetchGraphData(graphId)
     } catch (error) { }
   };
@@ -163,6 +165,7 @@ const GraphCreator: React.FC = () => {
 
 
   const handleAddRow = () => {
+
     const newRow = ["", "", "", ""];
     setRows([...rows, newRow]);
 
@@ -224,8 +227,12 @@ const GraphCreator: React.FC = () => {
   };
 
   useEffect(() => {
+    const graphId = localStorage.getItem("graphId")
     if (location.state?.graphId) {
       fetchGraphData(location.state?.graphId);
+    }
+    else if (graphId) {
+      fetchGraphData(Number(graphId))
     }
   }, []);
 
@@ -286,6 +293,7 @@ const GraphCreator: React.FC = () => {
         rows={graphBasicsTableRow}
         onRowsUpdate={handleGraphInformationUpdate}
         onDeleteRow={() => { }}
+        weighted={true}
       />
       <button className="btn btn-primary" type="button" onClick={() => navigate('/choose-algorithm', { state: { nodes, edges, graphName: fetchedGraph?.name, directed: fetchedGraph?.directed, weighted: fetchedGraph?.weighted } })}>
         Choose Algorithm
@@ -311,6 +319,7 @@ const GraphCreator: React.FC = () => {
         rows={rows}
         onRowsUpdate={handleRowsUpdate}
         onDeleteRow={handleDeleteRow}
+        weighted={fetchedGraph ? fetchedGraph.weighted : false}
       />
       <div className="d-flex flex-row justify-content-center align-items-center">
         <button

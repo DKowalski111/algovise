@@ -100,7 +100,7 @@ const AlgorithmChooser: React.FC = () => {
       )}
 
       {/* Kruskal Algorithm */}
-      {weighted && (
+      {weighted && !directed && (
         <div className="d-flex justify-content-center align-items-center" style={{ width: '100%' }}>
           <div
             className="d-flex d-xxl-flex flex-row flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4"
@@ -114,7 +114,7 @@ const AlgorithmChooser: React.FC = () => {
       )}
 
       {/* Prim Algorithm */}
-      {weighted && (
+      {weighted && !directed && (
         <div className="d-flex justify-content-center align-items-center" style={{ width: '100%' }}>
           <div
             className="d-flex d-xxl-flex flex-row flex-grow-1 flex-shrink-1 justify-content-center align-items-center align-content-center flex-wrap justify-content-xxl-center align-items-xxl-center mx-3 my-5 py-4 px-4"

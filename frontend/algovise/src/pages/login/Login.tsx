@@ -79,8 +79,8 @@ const Login = () => {
               <button type="submit" className="btn btn-primary" style={{ width: "48%" }}>
                 Login
               </button>
-              <Link to="/registration">
-                <button type="button" className="btn btn-secondary" style={{ width: "48%" }}>
+              <Link to="/registration" style={{ width: "48%" }}>
+                <button type="button" className="btn btn-secondary">
                   Create Account
                 </button>
               </Link>

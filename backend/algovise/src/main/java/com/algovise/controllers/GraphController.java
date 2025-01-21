@@ -29,8 +29,9 @@ public class GraphController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Graph> getGraphById(@PathVariable Long id) {
-        Graph graph = graphService.getGraphById(id);
+    public ResponseEntity<Graph> getGraphById(@PathVariable Long id, @RequestHeader("Authorization") String authorizationHeader) throws IllegalAccessException {
+        String token = extractToken(authorizationHeader);
+        Graph graph = graphService.getGraphById(id, token);
         return ResponseEntity.ok(graph);
     }
 
@@ -45,14 +46,18 @@ public class GraphController {
         }
     }
 
+    private static List<Node> justAddedNodes = new ArrayList<>();
+
     @PostMapping("/{graphId}/nodes")
     public ResponseEntity<List<Node>> addNodeToGraph(@PathVariable Long graphId, @RequestBody Node[] nodes, @RequestHeader("Authorization") String authorizationHeader) {
+        justAddedNodes.clear();
         try {
             String token = extractToken(authorizationHeader);
             List<Node> createdNodes = new ArrayList<>();
             for (Node node : nodes) {
                 createdNodes.add(graphService.addNodeToGraph(graphId, node, token));
             }
+            justAddedNodes.addAll(createdNodes);
             return ResponseEntity.ok(createdNodes);
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
@@ -66,7 +71,7 @@ public class GraphController {
             removeNotExistingNodes(graphId, edgeDtos, token);
             List<Edge> createdEdges = new ArrayList<>();
             for (EdgeDto edgeDto : edgeDtos) {
-                createdEdges.add(graphService.addEdgeToGraph(graphId, edgeDto));
+                createdEdges.add(graphService.addEdgeToGraph(graphId, edgeDto, token));
             }
             return ResponseEntity.ok(createdEdges);
         } catch (IllegalAccessException e) {
@@ -104,17 +109,13 @@ public class GraphController {
             throw new IllegalAccessException("Trying to modify graph of someone else!");
         }
 
-        Set<Long> idsOfExistingEdges = new HashSet<>();
-        for (EdgeDto edgeDto : edges) {
-            idsOfExistingEdges.add(edgeDto.getId());
-        }
-
         Set<Long> idsOfExistingNodes = new HashSet<>();
 
         for (EdgeDto edgeDto : edges) {
             idsOfExistingNodes.add(edgeDto.getSourceId());
             idsOfExistingNodes.add(edgeDto.getTargetId());
         }
+
 
         for (Node node : graph.getNodes()) {
             final Long nodeId = node.getId();
@@ -125,8 +126,16 @@ public class GraphController {
                         idsOfEdgesToBeRemoved.add(edge.getId());
                     }
                 }
+
                 graphService.removeEdges(idsOfEdgesToBeRemoved);
-                graphService.removeNode(nodeId);
+                for(Node justAddedNode : justAddedNodes)
+                {
+                    if(justAddedNode.getId().equals(nodeId))
+                    {
+                        break;
+                    }
+                    graphService.removeNode(nodeId);
+                }
             }
         }
 

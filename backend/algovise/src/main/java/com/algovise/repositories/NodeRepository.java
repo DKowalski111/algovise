@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 public interface NodeRepository extends JpaRepository<Node, Long> {
 
     @Modifying
-    @Transactional
     @Query("DELETE FROM Node n WHERE n.id = :id")
     void deleteById(@Param("id") Long id);
 

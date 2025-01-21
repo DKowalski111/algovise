@@ -80,26 +80,25 @@ const Navbar: React.FC = () => {
         <div id="navcol-2" className="collapse navbar-collapse">
           <ul className="navbar-nav ms-auto">
             <li className="nav-item">
-              <a className="nav-link" href="#" style={{ color: 'var(--bs-body-bg)' }}>
-                Learn
+              <a className="nav-link" href="/tutorials" style={{ color: 'var(--bs-body-bg)' }}>
+                Tutorials
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link active" href="#" style={{ color: 'var(--bs-body-bg)' }}>
+              <a className="nav-link active" href="/quizzes" style={{ color: 'var(--bs-body-bg)' }}>
                 Quizzes
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#" style={{ color: 'var(--bs-body-bg)' }}>
+              <a className="nav-link" href="/saved-graphs" style={{ color: 'var(--bs-body-bg)' }}>
                 Saved Graphs
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#" style={{ color: 'var(--bs-body-bg)' }}>
-                Settings
+              <a className="nav-link" href="/profile" style={{ color: 'var(--bs-body-bg)' }}>
+                Profile
               </a>
             </li>
-            {/* Show logout button only if the user is logged in */}
             {isTokenValid === true && (
               <li className="nav-item">
                 <button
@@ -119,10 +118,13 @@ const Navbar: React.FC = () => {
           <a
             className="btn btn-primary ms-md-2"
             role="button"
-            href="#"
+            href="/create-graph"
             style={{
               background: 'var(--bs-orange)',
               borderStyle: 'none',
+            }}
+            onClick={() => {
+              localStorage.removeItem("graphId");
             }}
           >
             New Graph
